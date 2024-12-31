@@ -67,6 +67,12 @@ export const VideoSidebar = ({
 
       if (error) throw error;
       setRecordings(data || []);
+      
+      // Load board states for each recording
+      if (data && data.length > 0) {
+        const firstRecording = data[0];
+        await loadBoardStatesForRecording(firstRecording.id);
+      }
     } catch (error) {
       console.error('Error loading recordings:', error);
       toast.error("Failed to load recordings");
@@ -91,9 +97,14 @@ export const VideoSidebar = ({
   };
 
   const loadBoardStatesForRecording = async (recordingId: string) => {
-    const states = await loadBoardStates(recordingId);
-    setBoardStates(states);
-    setCurrentRecordingId(recordingId);
+    try {
+      const states = await loadBoardStates(recordingId);
+      setBoardStates(states);
+      setCurrentRecordingId(recordingId);
+    } catch (error) {
+      console.error('Error loading board states:', error);
+      toast.error("Failed to load board states");
+    }
   };
 
   return (
@@ -126,7 +137,7 @@ export const VideoSidebar = ({
                     key={recording.id}
                     className="flex items-center justify-between p-2 bg-gray-100 rounded-md"
                   >
-                    <span>{recording.name}</span>
+                    <span>{recording.name || `Recording ${recording.id.slice(0, 8)}`}</span>
                     <div className="flex items-center space-x-2">
                       <Button
                         variant="outline"

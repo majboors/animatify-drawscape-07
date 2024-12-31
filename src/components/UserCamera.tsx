@@ -10,7 +10,10 @@ export const UserCamera = () => {
   const toggleCamera = async () => {
     try {
       if (!isActive) {
-        const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+        const stream = await navigator.mediaDevices.getUserMedia({ 
+          video: true,
+          audio: true 
+        });
         if (videoRef.current) {
           videoRef.current.srcObject = stream;
         }
@@ -44,7 +47,7 @@ export const UserCamera = () => {
   }, []);
 
   return (
-    <div className="fixed bottom-20 right-4 z-40">
+    <div className="fixed bottom-24 right-4 z-30">
       <div className="relative">
         <video
           ref={videoRef}

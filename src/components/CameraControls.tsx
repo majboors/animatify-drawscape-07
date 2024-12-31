@@ -34,6 +34,50 @@ export const CameraControls = ({
   const [showProjectDialog, setShowProjectDialog] = useState(false);
   const [projectName, setProjectName] = useState("");
   const [currentProjectId, setCurrentProjectId] = useState<string | null>(null);
+  const [mediaRecorder, setMediaRecorder] = useState<MediaRecorder | null>(null);
+  const [recordedChunks, setRecordedChunks] = useState<Blob[]>([]);
+
+  const startRecording = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ 
+        video: true,
+        audio: true 
+      });
+      
+      const recorder = new MediaRecorder(stream);
+      
+      recorder.ondataavailable = (event) => {
+        if (event.data.size > 0) {
+          setRecordedChunks((prev) => [...prev, event.data]);
+        }
+      };
+      
+      recorder.onstop = () => {
+        const blob = new Blob(recordedChunks, { type: 'video/webm' });
+        const url = URL.createObjectURL(blob);
+        console.log('Recording saved:', url);
+        // Here you could save the video to Supabase storage
+      };
+      
+      recorder.start();
+      setMediaRecorder(recorder);
+      setIsRecording(true);
+      toast.success("Recording started with audio");
+    } catch (error) {
+      console.error('Error starting recording:', error);
+      toast.error("Failed to start recording");
+    }
+  };
+
+  const stopRecording = () => {
+    if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+      mediaRecorder.stop();
+      mediaRecorder.stream.getTracks().forEach(track => track.stop());
+      setIsRecording(false);
+      setCurrentProjectId(null);
+      toast.success("Recording stopped");
+    }
+  };
 
   const handleRecordingClick = async () => {
     if (!isRecording && !currentProjectId) {
@@ -42,12 +86,9 @@ export const CameraControls = ({
     }
 
     if (isRecording) {
-      setIsRecording(false);
-      setCurrentProjectId(null);
-      toast.success("Recording stopped");
+      stopRecording();
     } else {
-      setIsRecording(true);
-      toast.success("Recording started");
+      startRecording();
     }
   };
 
@@ -62,7 +103,7 @@ export const CameraControls = ({
       if (error) throw error;
 
       setCurrentProjectId(data.id);
-      setIsRecording(true);
+      startRecording();
       setShowProjectDialog(false);
       toast.success("Project created and recording started");
     } catch (error) {
@@ -88,7 +129,16 @@ export const CameraControls = ({
               <Button
                 variant="outline"
                 size="icon"
-                onClick={() => setIsPaused(!isPaused)}
+                onClick={() => {
+                  setIsPaused(!isPaused);
+                  if (mediaRecorder) {
+                    if (isPaused) {
+                      mediaRecorder.resume();
+                    } else {
+                      mediaRecorder.pause();
+                    }
+                  }
+                }}
               >
                 {isPaused ? (
                   <Play className="h-4 w-4" />
