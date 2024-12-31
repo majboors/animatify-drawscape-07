@@ -8,7 +8,12 @@ interface CanvasProps {
   activeColor: string;
 }
 
-export const Canvas = forwardRef(({ activeTool, activeColor }: CanvasProps, ref) => {
+export interface CanvasRef {
+  copy: () => void;
+  paste: () => void;
+}
+
+export const Canvas = forwardRef<CanvasRef, CanvasProps>(({ activeTool, activeColor }, ref) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [fabricCanvas, setFabricCanvas] = useState<ExtendedCanvas | null>(null);
   const [clipboard, setClipboard] = useState<FabricObject | null>(null);
@@ -22,27 +27,36 @@ export const Canvas = forwardRef(({ activeTool, activeColor }: CanvasProps, ref)
         toast.error("No object selected!");
         return;
       }
-      activeObject.clone((cloned: FabricObject) => {
-        setClipboard(cloned);
-      });
+      
+      // Create a deep clone of the object
+      const json = activeObject.toJSON();
+      const serializedObject = JSON.stringify(json);
+      setClipboard(JSON.parse(serializedObject));
+      toast.success("Object copied!");
     },
-    paste: async () => {
+    paste: () => {
       if (!fabricCanvas || !clipboard) {
         toast.error("Nothing to paste!");
         return;
       }
       
       try {
-        const clonedObj = await clipboard.clone();
-        clonedObj.set({
-          left: (clonedObj.left || 0) + 10,
-          top: (clonedObj.top || 0) + 10,
-          evented: true,
+        // Create new object from clipboard data
+        FabricCanvas.util.enlivenObjects([clipboard], (objects: FabricObject[]) => {
+          const pastedObj = objects[0];
+          if (pastedObj) {
+            pastedObj.set({
+              left: (pastedObj.left || 0) + 10,
+              top: (pastedObj.top || 0) + 10,
+              evented: true,
+            });
+            
+            fabricCanvas.add(pastedObj);
+            fabricCanvas.setActiveObject(pastedObj);
+            fabricCanvas.requestRenderAll();
+            toast.success("Object pasted!");
+          }
         });
-        
-        fabricCanvas.add(clonedObj);
-        fabricCanvas.setActiveObject(clonedObj);
-        fabricCanvas.requestRenderAll();
       } catch (error) {
         console.error('Error pasting object:', error);
         toast.error("Failed to paste object");
