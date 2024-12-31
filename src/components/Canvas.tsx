@@ -32,7 +32,7 @@ export const Canvas = forwardRef<CanvasRef, CanvasProps>(({ activeTool, activeCo
       setClipboard(JSON.stringify(activeObject.toJSON()));
       toast.success("Object copied!");
     },
-    paste: async () => {
+    paste: () => {
       if (!fabricCanvas || !clipboard) {
         toast.error("Nothing to paste!");
         return;
@@ -41,22 +41,23 @@ export const Canvas = forwardRef<CanvasRef, CanvasProps>(({ activeTool, activeCo
       try {
         // Parse the stored JSON
         const objectData = JSON.parse(clipboard);
-        // Create a new fabric object from the JSON
-        const newObject = await fabricCanvas.loadFromJSON({ objects: [objectData] });
         
-        // Get the newly created object
-        const pastedObj = fabricCanvas.getObjects().slice(-1)[0];
-        if (pastedObj) {
-          pastedObj.set({
-            left: (pastedObj.left || 0) + 10,
-            top: (pastedObj.top || 0) + 10,
-            evented: true,
-          });
-          
-          fabricCanvas.setActiveObject(pastedObj);
-          fabricCanvas.requestRenderAll();
-          toast.success("Object pasted!");
-        }
+        // Use enlivenObjects to create a new object
+        util.enlivenObjects([objectData], function(objects) {
+          const pastedObj = objects[0];
+          if (pastedObj) {
+            pastedObj.set({
+              left: (pastedObj.left || 0) + 10,
+              top: (pastedObj.top || 0) + 10,
+              evented: true,
+            });
+            
+            fabricCanvas.add(pastedObj);
+            fabricCanvas.setActiveObject(pastedObj);
+            fabricCanvas.requestRenderAll();
+            toast.success("Object pasted!");
+          }
+        });
       } catch (error) {
         console.error('Error pasting object:', error);
         toast.error("Failed to paste object");
@@ -185,6 +186,7 @@ export const Canvas = forwardRef<CanvasRef, CanvasProps>(({ activeTool, activeCo
       <canvas ref={canvasRef} className="w-full h-full" />
     </div>
   );
+
 });
 
 Canvas.displayName = 'Canvas';
