@@ -1,4 +1,4 @@
-import { Square, Circle, Pencil, MousePointer, Palette } from "lucide-react";
+import { Square, Circle, Pencil, MousePointer, Triangle as TriangleIcon, Star, Minus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface ToolbarProps {
@@ -14,6 +14,9 @@ export const Toolbar = ({ activeTool, activeColor, onToolChange, onColorChange }
     { id: "draw", icon: Pencil, label: "Draw" },
     { id: "rectangle", icon: Square, label: "Rectangle" },
     { id: "circle", icon: Circle, label: "Circle" },
+    { id: "triangle", icon: TriangleIcon, label: "Triangle" },
+    { id: "line", icon: Minus, label: "Line" },
+    { id: "star", icon: Star, label: "Star" },
   ];
 
   const colors = ["#0078D4", "#2B579A", "#666666", "#E74C3C", "#2ECC71", "#F1C40F"];
