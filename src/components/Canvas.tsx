@@ -2,6 +2,17 @@ import { useEffect, useRef, useState } from "react";
 import { Canvas as FabricCanvas, Circle, Rect, Triangle, Line, PencilBrush, Object as FabricObject, Polygon } from "fabric";
 import { toast } from "sonner";
 
+// Extend FabricCanvas type to include clipboard
+interface ExtendedCanvas extends FabricCanvas {
+  clipboard?: FabricObject;
+}
+
+// Extend FabricObject type to include possible activeSelection properties
+interface ExtendedFabricObject extends FabricObject {
+  canvas?: FabricCanvas;
+  forEachObject?: (callback: (obj: FabricObject) => void) => void;
+}
+
 interface CanvasProps {
   activeTool: string;
   activeColor: string;
@@ -9,7 +20,7 @@ interface CanvasProps {
 
 export const Canvas = ({ activeTool, activeColor }: CanvasProps) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const [fabricCanvas, setFabricCanvas] = useState<FabricCanvas | null>(null);
+  const [fabricCanvas, setFabricCanvas] = useState<ExtendedCanvas | null>(null);
 
   useEffect(() => {
     if (!canvasRef.current) return;
@@ -19,9 +30,8 @@ export const Canvas = ({ activeTool, activeColor }: CanvasProps) => {
       height: window.innerHeight - 100,
       backgroundColor: "#ffffff",
       preserveObjectStacking: true,
-    });
+    }) as ExtendedCanvas;
 
-    // Initialize drawing brush after canvas creation
     canvas.freeDrawingBrush = new PencilBrush(canvas);
     canvas.freeDrawingBrush.width = 2;
     canvas.freeDrawingBrush.color = activeColor;
@@ -31,23 +41,24 @@ export const Canvas = ({ activeTool, activeColor }: CanvasProps) => {
       if (!e.ctrlKey && !e.metaKey) return;
 
       if (e.key === 'c') {
-        if (!canvas.getActiveObject()) return;
-        canvas.getActiveObject().clone((cloned: FabricObject) => {
+        const activeObject = canvas.getActiveObject();
+        if (!activeObject) return;
+        activeObject.clone((cloned: FabricObject) => {
           canvas.clipboard = cloned;
+          toast("Object copied!");
         });
-        toast("Object copied!");
       }
 
       if (e.key === 'v') {
         if (!canvas.clipboard) return;
-        canvas.clipboard.clone((clonedObj: FabricObject) => {
+        canvas.clipboard.clone((clonedObj: ExtendedFabricObject) => {
           canvas.discardActiveObject();
           clonedObj.set({
             left: clonedObj.left! + 10,
             top: clonedObj.top! + 10,
             evented: true,
           });
-          if (clonedObj.type === 'activeSelection') {
+          if (clonedObj.type === 'activeSelection' && clonedObj.forEachObject) {
             clonedObj.canvas = canvas;
             clonedObj.forEachObject((obj: FabricObject) => {
               canvas.add(obj);
@@ -57,8 +68,8 @@ export const Canvas = ({ activeTool, activeColor }: CanvasProps) => {
           }
           canvas.setActiveObject(clonedObj);
           canvas.requestRenderAll();
+          toast("Object pasted!");
         });
-        toast("Object pasted!");
       }
     });
 
