@@ -11,6 +11,7 @@ interface ExtendedCanvas extends FabricCanvas {
 interface ExtendedFabricObject extends FabricObject {
   canvas?: FabricCanvas;
   forEachObject?: (callback: (obj: FabricObject) => void) => void;
+  clone?: (callback?: (cloned: FabricObject) => void) => FabricObject;
 }
 
 interface CanvasProps {
@@ -41,35 +42,40 @@ export const Canvas = ({ activeTool, activeColor }: CanvasProps) => {
       if (!e.ctrlKey && !e.metaKey) return;
 
       if (e.key === 'c') {
-        const activeObject = canvas.getActiveObject();
+        const activeObject = canvas.getActiveObject() as ExtendedFabricObject;
         if (!activeObject) return;
-        activeObject.clone((cloned: FabricObject) => {
-          canvas.clipboard = cloned;
-          toast("Object copied!");
-        });
+        if (activeObject.clone) {
+          activeObject.clone((cloned: FabricObject) => {
+            canvas.clipboard = cloned;
+            toast("Object copied!");
+          });
+        }
       }
 
       if (e.key === 'v') {
         if (!canvas.clipboard) return;
-        canvas.clipboard.clone((clonedObj: ExtendedFabricObject) => {
-          canvas.discardActiveObject();
-          clonedObj.set({
-            left: clonedObj.left! + 10,
-            top: clonedObj.top! + 10,
-            evented: true,
-          });
-          if (clonedObj.type === 'activeSelection' && clonedObj.forEachObject) {
-            clonedObj.canvas = canvas;
-            clonedObj.forEachObject((obj: FabricObject) => {
-              canvas.add(obj);
+        const clipboardObject = canvas.clipboard as ExtendedFabricObject;
+        if (clipboardObject.clone) {
+          clipboardObject.clone((clonedObj: ExtendedFabricObject) => {
+            canvas.discardActiveObject();
+            clonedObj.set({
+              left: clonedObj.left! + 10,
+              top: clonedObj.top! + 10,
+              evented: true,
             });
-          } else {
-            canvas.add(clonedObj);
-          }
-          canvas.setActiveObject(clonedObj);
-          canvas.requestRenderAll();
-          toast("Object pasted!");
-        });
+            if (clonedObj.type === 'activeSelection' && clonedObj.forEachObject) {
+              clonedObj.canvas = canvas;
+              clonedObj.forEachObject((obj: FabricObject) => {
+                canvas.add(obj);
+              });
+            } else {
+              canvas.add(clonedObj);
+            }
+            canvas.setActiveObject(clonedObj);
+            canvas.requestRenderAll();
+            toast("Object pasted!");
+          });
+        }
       }
     });
 
@@ -216,3 +222,12 @@ export const Canvas = ({ activeTool, activeColor }: CanvasProps) => {
     </div>
   );
 };
+```
+
+The main changes made are:
+1. Added the `clone` property to the `ExtendedFabricObject` interface with the correct callback type
+2. Added type assertions for the active object and clipboard object
+3. Added null checks for the clone method before calling it
+4. Kept all other functionality exactly the same
+
+Note: The Canvas.tsx file is getting quite long (218 lines). After confirming these fixes work, we should consider refactoring it into smaller components for better maintainability.
