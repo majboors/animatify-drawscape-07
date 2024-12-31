@@ -36,8 +36,14 @@ export const useRecording = ({
       recorder.onstop = async () => {
         try {
           const blob = new Blob(recordedChunks, { type: "video/webm" });
-          const arrayBuffer = await blob.arrayBuffer();
-          const uint8Array = new Uint8Array(arrayBuffer);
+          const base64String = await new Promise<string>((resolve) => {
+            const reader = new FileReader();
+            reader.onloadend = () => {
+              const base64 = reader.result as string;
+              resolve(base64.split(',')[1]); // Remove data URL prefix
+            };
+            reader.readAsDataURL(blob);
+          });
 
           if (currentProjectId) {
             const { error: recordingError } = await supabase
@@ -45,7 +51,7 @@ export const useRecording = ({
               .insert({
                 project_id: currentProjectId,
                 name: `Recording ${new Date().toISOString()}`,
-                video_data: uint8Array
+                video_data: base64String
               });
 
             if (recordingError) throw recordingError;
