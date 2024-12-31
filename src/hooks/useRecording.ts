@@ -25,13 +25,16 @@ export const useRecording = ({
 
   const startRecording = useCallback(async () => {
     try {
-      console.log("Starting recording...");
+      console.log("Requesting media permissions...");
       const stream = await navigator.mediaDevices.getUserMedia({ 
         video: true,
         audio: true 
       });
       
+      console.log("Media permissions granted, setting up preview...");
       setPreviewStream(stream);
+
+      console.log("Creating MediaRecorder...");
       const recorder = new MediaRecorder(stream, {
         mimeType: 'video/webm;codecs=vp9'
       });
@@ -43,8 +46,14 @@ export const useRecording = ({
         }
       };
 
+      recorder.onstart = () => {
+        console.log("Recording started");
+        setIsRecording(true);
+        toast.success("Recording started");
+      };
+
       recorder.onstop = async () => {
-        console.log("Recording stopped, saving...");
+        console.log("Recording stopped, processing...");
         try {
           const blob = new Blob(recordedChunks, { type: "video/webm" });
           const reader = new FileReader();
@@ -75,22 +84,21 @@ export const useRecording = ({
         }
       };
 
-      recorder.onstart = () => {
-        console.log("Recorder started");
-        setIsRecording(true);
-        toast.success("Recording started");
-      };
-
       recorder.onpause = () => {
-        console.log("Recorder paused");
+        console.log("Recording paused");
         setIsPaused(true);
         toast.success("Recording paused");
       };
 
       recorder.onresume = () => {
-        console.log("Recorder resumed");
+        console.log("Recording resumed");
         setIsPaused(false);
         toast.success("Recording resumed");
+      };
+
+      recorder.onerror = (event) => {
+        console.error("Recording error:", event);
+        toast.error("Recording error occurred");
       };
 
       setMediaRecorder(recorder);
