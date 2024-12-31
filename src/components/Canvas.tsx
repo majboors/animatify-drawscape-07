@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, forwardRef, useImperativeHandle } from "react";
-import { Canvas as FabricCanvas, Circle, Rect, Triangle, Line, PencilBrush, Object as FabricObject, Polygon } from "fabric";
+import { Canvas as FabricCanvas, Circle, Rect, Triangle, Line, PencilBrush, Object as FabricObject, Polygon, util } from "fabric";
 import { toast } from "sonner";
 import { ExtendedCanvas } from "../types/fabric";
 
@@ -42,7 +42,7 @@ export const Canvas = forwardRef<CanvasRef, CanvasProps>(({ activeTool, activeCo
       
       try {
         // Create new object from clipboard data
-        FabricCanvas.util.enlivenObjects([clipboard], (objects: FabricObject[]) => {
+        util.enlivenObjects([clipboard], (objects: FabricObject[]) => {
           const pastedObj = objects[0];
           if (pastedObj) {
             pastedObj.set({
