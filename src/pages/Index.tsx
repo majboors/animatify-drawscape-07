@@ -1,6 +1,9 @@
 import { useState, useRef } from "react";
 import { Toolbar } from "@/components/Toolbar";
 import { Canvas, CanvasRef } from "@/components/Canvas";
+import { CodeSidebar } from "@/components/CodeSidebar";
+import { VideoSidebar } from "@/components/VideoSidebar";
+import { UserCamera } from "@/components/UserCamera";
 
 const Index = () => {
   const [activeTool, setActiveTool] = useState("select");
@@ -28,6 +31,9 @@ const Index = () => {
         onGroup={() => canvasRef.current?.group()}
         onUngroup={() => canvasRef.current?.ungroup()}
       />
+      <CodeSidebar />
+      <VideoSidebar />
+      <UserCamera />
     </div>
   );
 };
