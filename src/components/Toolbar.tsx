@@ -7,9 +7,18 @@ interface ToolbarProps {
   activeColor: string;
   onToolChange: (tool: string) => void;
   onColorChange: (color: string) => void;
+  onCopy?: () => void;
+  onPaste?: () => void;
 }
 
-export const Toolbar = ({ activeTool, activeColor, onToolChange, onColorChange }: ToolbarProps) => {
+export const Toolbar = ({ 
+  activeTool, 
+  activeColor, 
+  onToolChange, 
+  onColorChange,
+  onCopy,
+  onPaste 
+}: ToolbarProps) => {
   const tools = [
     { id: "select", icon: MousePointer, label: "Select" },
     { id: "draw", icon: Pencil, label: "Draw" },
@@ -26,7 +35,7 @@ export const Toolbar = ({ activeTool, activeColor, onToolChange, onColorChange }
       icon: Copy, 
       label: "Copy", 
       onClick: () => {
-        document.execCommand('copy');
+        onCopy?.();
         toast("Object copied!");
       }
     },
@@ -35,7 +44,7 @@ export const Toolbar = ({ activeTool, activeColor, onToolChange, onColorChange }
       icon: Clipboard, 
       label: "Paste", 
       onClick: () => {
-        document.execCommand('paste');
+        onPaste?.();
         toast("Object pasted!");
       }
     },

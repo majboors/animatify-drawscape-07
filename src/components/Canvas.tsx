@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, forwardRef, useImperativeHandle } from "react";
 import { Canvas as FabricCanvas, Circle, Rect, Triangle, Line, PencilBrush, Object as FabricObject, Polygon } from "fabric";
 import { toast } from "sonner";
 import { ExtendedCanvas } from "../types/fabric";
@@ -8,9 +8,47 @@ interface CanvasProps {
   activeColor: string;
 }
 
-export const Canvas = ({ activeTool, activeColor }: CanvasProps) => {
+export const Canvas = forwardRef(({ activeTool, activeColor }: CanvasProps, ref) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [fabricCanvas, setFabricCanvas] = useState<ExtendedCanvas | null>(null);
+  const [clipboard, setClipboard] = useState<FabricObject | null>(null);
+
+  // Expose copy and paste methods to parent
+  useImperativeHandle(ref, () => ({
+    copy: () => {
+      if (!fabricCanvas) return;
+      const activeObject = fabricCanvas.getActiveObject();
+      if (!activeObject) {
+        toast.error("No object selected!");
+        return;
+      }
+      activeObject.clone((cloned: FabricObject) => {
+        setClipboard(cloned);
+      });
+    },
+    paste: async () => {
+      if (!fabricCanvas || !clipboard) {
+        toast.error("Nothing to paste!");
+        return;
+      }
+      
+      try {
+        const clonedObj = await clipboard.clone();
+        clonedObj.set({
+          left: (clonedObj.left || 0) + 10,
+          top: (clonedObj.top || 0) + 10,
+          evented: true,
+        });
+        
+        fabricCanvas.add(clonedObj);
+        fabricCanvas.setActiveObject(clonedObj);
+        fabricCanvas.requestRenderAll();
+      } catch (error) {
+        console.error('Error pasting object:', error);
+        toast.error("Failed to paste object");
+      }
+    }
+  }));
 
   useEffect(() => {
     if (!canvasRef.current) return;
@@ -133,4 +171,6 @@ export const Canvas = ({ activeTool, activeColor }: CanvasProps) => {
       <canvas ref={canvasRef} className="w-full h-full" />
     </div>
   );
-};
+});
+
+Canvas.displayName = 'Canvas';
