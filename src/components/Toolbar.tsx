@@ -1,5 +1,6 @@
-import { Square, Circle, Pencil, MousePointer, Triangle as TriangleIcon, Star, Minus } from "lucide-react";
+import { Square, Circle, Pencil, MousePointer, Triangle as TriangleIcon, Star, Minus, Copy, Clipboard, PaintBucket } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 
 interface ToolbarProps {
   activeTool: string;
@@ -19,6 +20,35 @@ export const Toolbar = ({ activeTool, activeColor, onToolChange, onColorChange }
     { id: "star", icon: Star, label: "Star" },
   ];
 
+  const actions = [
+    { 
+      id: "copy", 
+      icon: Copy, 
+      label: "Copy", 
+      onClick: () => {
+        document.execCommand('copy');
+        toast("Object copied!");
+      }
+    },
+    { 
+      id: "paste", 
+      icon: Clipboard, 
+      label: "Paste", 
+      onClick: () => {
+        document.execCommand('paste');
+        toast("Object pasted!");
+      }
+    },
+    { 
+      id: "fill", 
+      icon: PaintBucket, 
+      label: "Fill", 
+      onClick: () => {
+        toast("Double-click an object to toggle fill!");
+      }
+    },
+  ];
+
   const colors = ["#0078D4", "#2B579A", "#666666", "#E74C3C", "#2ECC71", "#F1C40F"];
 
   return (
@@ -33,6 +63,20 @@ export const Toolbar = ({ activeTool, activeColor, onToolChange, onColorChange }
             className="w-10 h-10"
           >
             <tool.icon className="h-5 w-5" />
+          </Button>
+        ))}
+      </div>
+      <div className="w-px h-8 bg-gray-200 mx-2" />
+      <div className="flex space-x-1">
+        {actions.map((action) => (
+          <Button
+            key={action.id}
+            variant="outline"
+            size="icon"
+            onClick={action.onClick}
+            className="w-10 h-10"
+          >
+            <action.icon className="h-5 w-5" />
           </Button>
         ))}
       </div>
