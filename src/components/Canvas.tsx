@@ -3,6 +3,8 @@ import { Canvas as FabricCanvas, IText, Object as FabricObject, PencilBrush, uti
 import { toast } from "sonner";
 import { ExtendedCanvas } from "../types/fabric";
 import { useShapeCreation } from "../hooks/useShapeCreation";
+import { useCanvasEvents } from "../hooks/useCanvasEvents";
+import { saveBoardState } from "@/utils/boardState";
 
 interface CanvasProps {
   activeTool: string;
@@ -22,8 +24,9 @@ export const Canvas = forwardRef<CanvasRef, CanvasProps>(({ activeTool, activeCo
   const [fabricCanvas, setFabricCanvas] = useState<ExtendedCanvas | null>(null);
   const [clipboard, setClipboard] = useState<string | null>(null);
 
-  // Use the shape creation hook
+  // Use custom hooks
   useShapeCreation(fabricCanvas, activeTool, activeColor);
+  useCanvasEvents(fabricCanvas, activeTool, activeColor, activeFont);
 
   const handleGroup = () => {
     if (!fabricCanvas) return;
@@ -109,7 +112,7 @@ export const Canvas = forwardRef<CanvasRef, CanvasProps>(({ activeTool, activeCo
       height: window.innerHeight - 100,
       backgroundColor: "#ffffff",
       preserveObjectStacking: true,
-      selection: true, // Enable multiple selection
+      selection: true,
     }) as ExtendedCanvas;
 
     canvas.freeDrawingBrush = new PencilBrush(canvas);
@@ -127,9 +130,21 @@ export const Canvas = forwardRef<CanvasRef, CanvasProps>(({ activeTool, activeCo
 
     window.addEventListener("resize", handleResize);
 
+    // Add board state loading handler
+    const handleLoadBoardState = (event: CustomEvent) => {
+      const boardData = event.detail;
+      canvas.loadFromJSON(boardData, () => {
+        canvas.renderAll();
+        toast.success("Board state loaded!");
+      });
+    };
+
+    window.addEventListener('loadBoardState', handleLoadBoardState as EventListener);
+
     return () => {
       canvas.dispose();
       window.removeEventListener("resize", handleResize);
+      window.removeEventListener('loadBoardState', handleLoadBoardState as EventListener);
     };
   }, []);
 
@@ -137,19 +152,12 @@ export const Canvas = forwardRef<CanvasRef, CanvasProps>(({ activeTool, activeCo
     if (!fabricCanvas) return;
 
     fabricCanvas.isDrawingMode = activeTool === "draw";
-    
-    // Set selection mode when using select tool
-    if (activeTool === "select") {
-      fabricCanvas.selection = true;
-    } else {
-      fabricCanvas.selection = false;
-    }
+    fabricCanvas.selection = activeTool === "select";
     
     if (activeTool === "draw" && fabricCanvas.freeDrawingBrush) {
       fabricCanvas.freeDrawingBrush.color = activeColor;
     }
 
-    // Handle text tool
     if (activeTool === "text") {
       const text = new IText("Click to edit text", {
         left: 100,
@@ -164,7 +172,6 @@ export const Canvas = forwardRef<CanvasRef, CanvasProps>(({ activeTool, activeCo
       fabricCanvas.requestRenderAll();
     }
 
-    // Update active object properties
     const activeObject = fabricCanvas.getActiveObject();
     if (activeObject && activeTool === "select") {
       if (activeObject.type === 'i-text' && activeFont) {
@@ -182,83 +189,7 @@ export const Canvas = forwardRef<CanvasRef, CanvasProps>(({ activeTool, activeCo
       }
       fabricCanvas.requestRenderAll();
     }
-
-    // Add object:added event listener to handle pencil drawings
-    fabricCanvas.on('path:created', (e: any) => {
-      const path = e.path;
-      if (path) {
-        // Make the path selectable but without fill initially
-        path.set({
-          selectable: true,
-          fill: null,  // No fill by default
-          stroke: activeColor,
-          perPixelTargetFind: true
-        });
-        fabricCanvas.requestRenderAll();
-      }
-    });
-
-    // Add selection:created event listener to update color when object is selected
-    fabricCanvas.on('selection:created', (e) => {
-      if (activeTool === "select" && e.selected) {
-        const selectedObject = e.selected[0];
-        if (selectedObject.type === 'line') {
-          selectedObject.set('stroke', activeColor);
-        } else if (selectedObject.type === 'path') {
-          selectedObject.set('stroke', activeColor);
-          // Only update fill if it's already filled
-          if (selectedObject.get('fill') !== null && selectedObject.get('fill') !== '') {
-            selectedObject.set('fill', activeColor);
-          }
-        } else {
-          selectedObject.set('fill', activeColor);
-        }
-        fabricCanvas.requestRenderAll();
-      }
-    });
-
-    // Add double click handler to toggle fill for paths
-    fabricCanvas.on('mouse:dblclick', (e) => {
-      if (!e.target || e.target.type !== 'path') return;
-      
-      const pathObject = e.target;
-      const currentFill = pathObject.get('fill');
-      
-      // Toggle fill
-      if (!currentFill || currentFill === '') {
-        pathObject.set('fill', activeColor);
-        toast("Fill added to drawing!");
-      } else {
-        pathObject.set('fill', null);
-        toast("Fill removed from drawing!");
-      }
-      
-      fabricCanvas.requestRenderAll();
-    });
-
-    return () => {
-      fabricCanvas.off("mouse:dblclick");
-    };
-
   }, [activeTool, activeColor, activeFont, fabricCanvas]);
-
-  useEffect(() => {
-    if (!fabricCanvas) return;
-
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if ((e.ctrlKey || e.metaKey) && e.key === 'g') {
-        e.preventDefault();
-        if (e.shiftKey) {
-          handleUngroup();
-        } else {
-          handleGroup();
-        }
-      }
-    };
-
-    document.addEventListener('keydown', handleKeyDown);
-    return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [fabricCanvas]);
 
   return (
     <div className="w-full h-[calc(100vh-64px)] bg-gray-50 overflow-hidden">

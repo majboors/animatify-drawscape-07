@@ -9,7 +9,53 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      board_states: {
+        Row: {
+          board_data: Json
+          created_at: string
+          id: string
+          recording_id: string | null
+        }
+        Insert: {
+          board_data: Json
+          created_at?: string
+          id?: string
+          recording_id?: string | null
+        }
+        Update: {
+          board_data?: Json
+          created_at?: string
+          id?: string
+          recording_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "board_states_recording_id_fkey"
+            columns: ["recording_id"]
+            isOneToOne: false
+            referencedRelation: "recordings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      recordings: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

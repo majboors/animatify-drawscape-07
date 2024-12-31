@@ -1,14 +1,37 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Video, X } from "lucide-react";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { toast } from "sonner";
+import { loadBoardStates } from "@/utils/boardState";
+import { supabase } from "@/integrations/supabase/client";
 
 export const VideoSidebar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [projectName, setProjectName] = useState("");
   const [isRecording, setIsRecording] = useState(false);
-  const [recordings, setRecordings] = useState<{ name: string; url: string }[]>([]);
+  const [recordings, setRecordings] = useState<{ id: string; name: string }[]>([]);
+  const [selectedRecording, setSelectedRecording] = useState<string | null>(null);
+  const [boardStates, setBoardStates] = useState<any[]>([]);
+
+  useEffect(() => {
+    loadRecordings();
+  }, []);
+
+  const loadRecordings = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('recordings')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      setRecordings(data || []);
+    } catch (error) {
+      console.error('Error loading recordings:', error);
+      toast.error("Failed to load recordings");
+    }
+  };
 
   const startRecording = async () => {
     if (!projectName) {
@@ -17,29 +40,34 @@ export const VideoSidebar = () => {
     }
 
     try {
+      const { data, error } = await supabase
+        .from('recordings')
+        .insert([{ name: projectName }])
+        .select()
+        .single();
+
+      if (error) throw error;
+      
       setIsRecording(true);
-      toast.info("Recording started (demo)");
+      setSelectedRecording(data.id);
+      await loadRecordings();
+      toast.success("Recording started");
     } catch (error) {
+      console.error('Error starting recording:', error);
       toast.error("Failed to start recording");
     }
   };
 
   const stopRecording = () => {
     setIsRecording(false);
-    setRecordings([
-      ...recordings,
-      {
-        name: projectName,
-        url: "#demo-recording",
-      },
-    ]);
-    toast.success("Recording saved (demo)");
+    setSelectedRecording(null);
+    toast.success("Recording saved");
   };
 
-  const openBoard = (recordingName: string) => {
-    // Load the board state associated with this recording
-    toast.info(`Opening board for ${recordingName}`);
-    // Here you would typically load the saved state and update the canvas
+  const loadBoardStatesForRecording = async (recordingId: string) => {
+    const states = await loadBoardStates(recordingId);
+    setBoardStates(states);
+    setSelectedRecording(recordingId);
   };
 
   return (
@@ -54,7 +82,7 @@ export const VideoSidebar = () => {
       </Button>
 
       {isOpen && (
-        <div className="fixed top-0 left-0 h-full w-1/3 bg-white border-r border-gray-200 transition-all duration-300">
+        <div className="fixed top-0 left-0 h-full w-1/3 bg-white border-r border-gray-200 transition-all duration-300 overflow-y-auto">
           <div className="p-4">
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-lg font-semibold">Video Recording</h2>
@@ -86,28 +114,45 @@ export const VideoSidebar = () => {
                 <div className="mt-4">
                   <h3 className="font-semibold mb-2">Recordings</h3>
                   <div className="space-y-2">
-                    {recordings.map((recording, index) => (
+                    {recordings.map((recording) => (
                       <div
-                        key={index}
-                        className="flex items-center justify-between p-2 bg-gray-100 rounded-md"
+                        key={recording.id}
+                        className="p-2 bg-gray-100 rounded-md"
                       >
-                        <span>{recording.name}</span>
-                        <div className="space-x-2">
+                        <div className="flex items-center justify-between mb-2">
+                          <span>{recording.name}</span>
                           <Button
                             variant="outline"
                             size="sm"
-                            onClick={() => window.open(recording.url)}
+                            onClick={() => loadBoardStatesForRecording(recording.id)}
                           >
-                            View
-                          </Button>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => openBoard(recording.name)}
-                          >
-                            Open Board
+                            View Boards
                           </Button>
                         </div>
+                        {selectedRecording === recording.id && boardStates.length > 0 && (
+                          <div className="mt-2 pl-4 space-y-2">
+                            {boardStates.map((state, index) => (
+                              <div
+                                key={state.id}
+                                className="flex items-center justify-between"
+                              >
+                                <span>Board {index + 1}</span>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => {
+                                    // We'll implement this in the Canvas component
+                                    window.dispatchEvent(new CustomEvent('loadBoardState', {
+                                      detail: state.board_data
+                                    }));
+                                  }}
+                                >
+                                  Load
+                                </Button>
+                              </div>
+                            ))}
+                          </div>
+                        )}
                       </div>
                     ))}
                   </div>
