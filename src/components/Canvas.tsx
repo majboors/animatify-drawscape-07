@@ -42,18 +42,17 @@ export const Canvas = forwardRef<CanvasRef, CanvasProps>(({ activeTool, activeCo
         // Parse the stored JSON
         const objectData = JSON.parse(clipboard);
         
-        // Use enlivenObjects to create a new object
-        util.enlivenObjects([objectData], function(objects) {
-          const pastedObj = objects[0];
-          if (pastedObj) {
-            pastedObj.set({
-              left: (pastedObj.left || 0) + 10,
-              top: (pastedObj.top || 0) + 10,
+        // Use enlivenObjects with the correct options format
+        util.enlivenObjects([objectData], {
+          reviver: (obj: FabricObject) => {
+            obj.set({
+              left: (obj.left || 0) + 10,
+              top: (obj.top || 0) + 10,
               evented: true,
             });
             
-            fabricCanvas.add(pastedObj);
-            fabricCanvas.setActiveObject(pastedObj);
+            fabricCanvas.add(obj);
+            fabricCanvas.setActiveObject(obj);
             fabricCanvas.requestRenderAll();
             toast.success("Object pasted!");
           }
@@ -201,7 +200,6 @@ export const Canvas = forwardRef<CanvasRef, CanvasProps>(({ activeTool, activeCo
       <canvas ref={canvasRef} className="w-full h-full" />
     </div>
   );
-
 });
 
 Canvas.displayName = 'Canvas';
