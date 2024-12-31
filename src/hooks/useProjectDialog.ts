@@ -16,6 +16,11 @@ export const useProjectDialog = ({
   const [projectName, setProjectName] = useState("");
 
   const handleCreateProject = async () => {
+    if (!projectName.trim()) {
+      toast.error("Please enter a project name");
+      return;
+    }
+
     try {
       const { data, error } = await supabase
         .from('projects')
@@ -26,8 +31,8 @@ export const useProjectDialog = ({
       if (error) throw error;
 
       setCurrentProjectId(data.id);
-      startRecording();
-      toast.success("Project created and recording started");
+      await startRecording();
+      setProjectName("");
     } catch (error) {
       console.error('Error creating project:', error);
       toast.error("Failed to create project");
