@@ -28,6 +28,7 @@ export const VideoSidebar = ({
   const [selectedProject, setSelectedProject] = useState<any>(null);
   const [recordings, setRecordings] = useState<any[]>([]);
   const [boardStates, setBoardStates] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     if (isOpen) {
@@ -43,24 +44,31 @@ export const VideoSidebar = ({
 
   const loadProjects = async () => {
     try {
+      setIsLoading(true);
       const { data, error } = await supabase
         .from('projects')
         .select('*')
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setProjects(data || []);
+      
       if (data && data.length > 0) {
+        setProjects(data);
         setSelectedProject(data[0]); // Auto-select first project
+      } else {
+        toast.info("No projects found");
       }
     } catch (error) {
       console.error('Error loading projects:', error);
       toast.error("Failed to load projects");
+    } finally {
+      setIsLoading(false);
     }
   };
 
   const loadRecordings = async (projectId: string) => {
     try {
+      setIsLoading(true);
       const { data, error } = await supabase
         .from('recordings')
         .select('*')
@@ -68,20 +76,27 @@ export const VideoSidebar = ({
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setRecordings(data || []);
-      
-      // Load board states for the first recording if available
+
       if (data && data.length > 0) {
+        setRecordings(data);
+        // Load board states for the first recording
         await loadBoardStatesForRecording(data[0].id);
+      } else {
+        setRecordings([]);
+        setBoardStates([]);
+        toast.info("No recordings found for this project");
       }
     } catch (error) {
       console.error('Error loading recordings:', error);
       toast.error("Failed to load recordings");
+    } finally {
+      setIsLoading(false);
     }
   };
 
   const deleteRecording = async (recordingId: string) => {
     try {
+      setIsLoading(true);
       const { error } = await supabase
         .from('recordings')
         .delete()
@@ -97,22 +112,28 @@ export const VideoSidebar = ({
     } catch (error) {
       console.error('Error deleting recording:', error);
       toast.error("Failed to delete recording");
+    } finally {
+      setIsLoading(false);
     }
   };
 
   const loadBoardStatesForRecording = async (recordingId: string) => {
     try {
+      setIsLoading(true);
       const states = await loadBoardStates(recordingId);
       setBoardStates(states);
       setCurrentRecordingId(recordingId);
     } catch (error) {
       console.error('Error loading board states:', error);
       toast.error("Failed to load board states");
+    } finally {
+      setIsLoading(false);
     }
   };
 
   const playRecording = async (recordingId: string) => {
     try {
+      setIsLoading(true);
       const { data, error } = await supabase
         .from('recordings')
         .select('video_data')
@@ -122,7 +143,6 @@ export const VideoSidebar = ({
       if (error) throw error;
 
       if (data?.video_data) {
-        // Create blob directly from the Uint8Array data
         const blob = new Blob([data.video_data], { type: 'video/webm' });
         const videoUrl = URL.createObjectURL(blob);
         
@@ -148,6 +168,8 @@ export const VideoSidebar = ({
     } catch (error) {
       console.error('Error playing recording:', error);
       toast.error("Failed to play recording");
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -159,87 +181,101 @@ export const VideoSidebar = ({
         </SheetHeader>
         
         <div className="mt-4 space-y-4">
-          <div className="grid grid-cols-2 gap-4">
-            {projects.map((project) => (
-              <Button
-                key={project.id}
-                variant={selectedProject?.id === project.id ? "default" : "outline"}
-                className="justify-start"
-                onClick={() => setSelectedProject(project)}
-              >
-                {project.name}
-              </Button>
-            ))}
-          </div>
-
-          {selectedProject && (
-            <div className="space-y-2">
-              <h3 className="font-semibold">Recordings in {selectedProject.name}</h3>
-              <div className="space-y-2">
-                {recordings.map((recording) => (
-                  <div
-                    key={recording.id}
-                    className="flex items-center justify-between p-2 bg-gray-100 rounded-md"
+          {isLoading ? (
+            <div className="flex items-center justify-center p-4">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900" />
+            </div>
+          ) : (
+            <>
+              <div className="grid grid-cols-2 gap-4">
+                {projects.map((project) => (
+                  <Button
+                    key={project.id}
+                    variant={selectedProject?.id === project.id ? "default" : "outline"}
+                    className="justify-start"
+                    onClick={() => setSelectedProject(project)}
                   >
-                    <span>{recording.name || `Recording ${recording.id.slice(0, 8)}`}</span>
-                    <div className="flex items-center space-x-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => playRecording(recording.id)}
-                      >
-                        <Play className="h-4 w-4 mr-1" />
-                        Play Video
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => loadBoardStatesForRecording(recording.id)}
-                      >
-                        <Video className="h-4 w-4 mr-1" />
-                        View Boards
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => deleteRecording(recording.id)}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </div>
+                    {project.name}
+                  </Button>
                 ))}
               </div>
-            </div>
-          )}
 
-          {currentRecordingId && boardStates.length > 0 && (
-            <div className="mt-4">
-              <h3 className="font-semibold mb-2">Saved Boards</h3>
-              <div className="space-y-2">
-                {boardStates.map((state, index) => (
-                  <div
-                    key={state.id}
-                    className="flex items-center justify-between p-2 bg-gray-100 rounded-md"
-                  >
-                    <span>Board {index + 1}</span>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => {
-                        window.dispatchEvent(
-                          new CustomEvent('loadBoardState', {
-                            detail: state.board_data
-                          })
-                        );
-                      }}
-                    >
-                      Load
-                    </Button>
+              {selectedProject && (
+                <div className="space-y-2">
+                  <h3 className="font-semibold">Recordings in {selectedProject.name}</h3>
+                  <div className="space-y-2">
+                    {recordings.length > 0 ? (
+                      recordings.map((recording) => (
+                        <div
+                          key={recording.id}
+                          className="flex items-center justify-between p-2 bg-gray-100 rounded-md"
+                        >
+                          <span>{recording.name || `Recording ${recording.id.slice(0, 8)}`}</span>
+                          <div className="flex items-center space-x-2">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => playRecording(recording.id)}
+                            >
+                              <Play className="h-4 w-4 mr-1" />
+                              Play Video
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => loadBoardStatesForRecording(recording.id)}
+                            >
+                              <Video className="h-4 w-4 mr-1" />
+                              View Boards
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => deleteRecording(recording.id)}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="text-center text-gray-500 py-4">
+                        No recordings found for this project
+                      </div>
+                    )}
                   </div>
-                ))}
-              </div>
-            </div>
+                </div>
+              )}
+
+              {currentRecordingId && boardStates.length > 0 && (
+                <div className="mt-4">
+                  <h3 className="font-semibold mb-2">Saved Boards</h3>
+                  <div className="space-y-2">
+                    {boardStates.map((state, index) => (
+                      <div
+                        key={state.id}
+                        className="flex items-center justify-between p-2 bg-gray-100 rounded-md"
+                      >
+                        <span>Board {index + 1}</span>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            window.dispatchEvent(
+                              new CustomEvent('loadBoardState', {
+                                detail: state.board_data
+                              })
+                            );
+                          }}
+                        >
+                          Load
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </>
           )}
         </div>
       </SheetContent>

@@ -34,29 +34,28 @@ export const useRecording = ({
       };
 
       recorder.onstop = async () => {
-        const blob = new Blob(recordedChunks, { type: "video/webm" });
-        const arrayBuffer = await blob.arrayBuffer();
-        const uint8Array = new Uint8Array(arrayBuffer);
+        try {
+          const blob = new Blob(recordedChunks, { type: "video/webm" });
+          const arrayBuffer = await blob.arrayBuffer();
+          const uint8Array = new Uint8Array(arrayBuffer);
 
-        if (currentProjectId) {
-          const { data: recordingData, error: recordingError } = await supabase
-            .from('recordings')
-            .insert({
-              project_id: currentProjectId,
-              name: `Recording ${new Date().toISOString()}`,
-              video_data: uint8Array
-            })
-            .select()
-            .single();
+          if (currentProjectId) {
+            const { error: recordingError } = await supabase
+              .from('recordings')
+              .insert({
+                project_id: currentProjectId,
+                name: `Recording ${new Date().toISOString()}`,
+                video_data: uint8Array
+              });
 
-          if (recordingError) {
-            console.error('Error saving recording:', recordingError);
-            toast.error("Failed to save recording");
-            return;
+            if (recordingError) throw recordingError;
+
+            toast.success("Recording saved successfully");
+            setRecordedChunks([]);
           }
-
-          toast.success("Recording saved successfully");
-          setRecordedChunks([]);
+        } catch (error) {
+          console.error('Error saving recording:', error);
+          toast.error("Failed to save recording");
         }
       };
 
@@ -111,5 +110,6 @@ export const useRecording = ({
     setCurrentProjectId,
     startRecording,
     setShowProjectDialog,
+    showProjectDialog,
   };
 };
