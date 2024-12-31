@@ -3,6 +3,7 @@ import { Toolbar } from "@/components/Toolbar";
 import { Canvas, CanvasRef } from "@/components/Canvas";
 import { VideoSidebar } from "@/components/VideoSidebar";
 import { CameraControls } from "@/components/CameraControls";
+import { UserCamera } from "@/components/UserCamera";
 import { saveBoardState } from "@/utils/boardState";
 
 const Index = () => {
@@ -22,12 +23,6 @@ const Index = () => {
 
   return (
     <div className="h-screen flex flex-col">
-      <Canvas
-        ref={canvasRef}
-        activeTool={activeTool}
-        activeColor={activeColor}
-        activeFont={activeFont}
-      />
       <Toolbar
         activeTool={activeTool}
         activeColor={activeColor}
@@ -41,6 +36,12 @@ const Index = () => {
         onGroup={() => canvasRef.current?.group()}
         onUngroup={() => canvasRef.current?.ungroup()}
         onSaveBoard={handleSaveBoard}
+      />
+      <Canvas
+        ref={canvasRef}
+        activeTool={activeTool}
+        activeColor={activeColor}
+        activeFont={activeFont}
       />
       <VideoSidebar
         isOpen={isSidebarOpen}
@@ -56,6 +57,7 @@ const Index = () => {
         isPaused={isPaused}
         setIsPaused={setIsPaused}
       />
+      <UserCamera />
     </div>
   );
 };
