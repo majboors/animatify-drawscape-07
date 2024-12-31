@@ -4,7 +4,6 @@ import { toast } from "sonner";
 import { ExtendedCanvas } from "../types/fabric";
 import { useShapeCreation } from "../hooks/useShapeCreation";
 import { useCanvasEvents } from "../hooks/useCanvasEvents";
-import { saveBoardState } from "@/utils/boardState";
 
 interface CanvasProps {
   activeTool: string;
@@ -17,6 +16,7 @@ export interface CanvasRef {
   paste: () => void;
   group: () => void;
   ungroup: () => void;
+  getFabricCanvas: () => ExtendedCanvas | null;
 }
 
 export const Canvas = forwardRef<CanvasRef, CanvasProps>(({ activeTool, activeColor, activeFont }, ref) => {
@@ -101,7 +101,8 @@ export const Canvas = forwardRef<CanvasRef, CanvasProps>(({ activeTool, activeCo
       }
     },
     group: handleGroup,
-    ungroup: handleUngroup
+    ungroup: handleUngroup,
+    getFabricCanvas: () => fabricCanvas
   }));
 
   useEffect(() => {

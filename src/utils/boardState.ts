@@ -1,9 +1,16 @@
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { ExtendedCanvas } from "../types/fabric";
+import { CanvasRef } from "@/components/Canvas";
+import { ExtendedCanvas } from "@/types/fabric";
 
-export const saveBoardState = async (canvas: ExtendedCanvas, recordingId: string) => {
+export const saveBoardState = async (canvasRef: CanvasRef | null, recordingId: string) => {
   try {
+    // Get the canvas instance from the ref using a custom method
+    const canvas = await getFabricCanvas(canvasRef);
+    if (!canvas) {
+      throw new Error("Canvas not found");
+    }
+
     const boardData = canvas.toJSON();
     const { error } = await supabase
       .from('board_states')
@@ -15,6 +22,17 @@ export const saveBoardState = async (canvas: ExtendedCanvas, recordingId: string
     console.error('Error saving board state:', error);
     toast.error("Failed to save board state");
   }
+};
+
+// Helper function to get the Fabric canvas instance from the ref
+const getFabricCanvas = async (canvasRef: CanvasRef | null): Promise<ExtendedCanvas | null> => {
+  if (!canvasRef) return null;
+  
+  // Access the canvas instance through a new method we'll add to the CanvasRef interface
+  if ('getFabricCanvas' in canvasRef) {
+    return (canvasRef as any).getFabricCanvas();
+  }
+  return null;
 };
 
 export const loadBoardStates = async (recordingId: string) => {
