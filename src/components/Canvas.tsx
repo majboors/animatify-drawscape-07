@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, forwardRef, useImperativeHandle } from "react";
-import { Canvas as FabricCanvas, Circle, Rect, Triangle, Line, PencilBrush, Object as FabricObject, Polygon, util } from "fabric";
+import { Canvas as FabricCanvas, Circle, Rect, Triangle, Line, PencilBrush, Object as FabricObject, Polygon, util, IText } from "fabric";
 import { toast } from "sonner";
 import { ExtendedCanvas } from "../types/fabric";
 
@@ -105,18 +105,33 @@ export const Canvas = forwardRef<CanvasRef, CanvasProps>(({ activeTool, activeCo
       fabricCanvas.freeDrawingBrush.color = activeColor;
     }
 
+    // Handle text tool
+    if (activeTool === "text") {
+      const text = new IText("Click to edit text", {
+        left: 100,
+        top: 100,
+        fontSize: 20,
+        fill: activeColor,
+        fontFamily: 'Arial'
+      });
+      fabricCanvas.add(text);
+      fabricCanvas.setActiveObject(text);
+      text.enterEditing();
+      fabricCanvas.requestRenderAll();
+    }
+
     // Update active object color when color changes
     const activeObject = fabricCanvas.getActiveObject();
     if (activeObject && activeTool === "select") {
       if (activeObject.type === 'line') {
         activeObject.set('stroke', activeColor);
       } else if (activeObject.type === 'path') {
-        // For pencil drawings (paths), only update stroke by default
         activeObject.set('stroke', activeColor);
-        // Only update fill if it's already filled
         if (activeObject.get('fill') !== null && activeObject.get('fill') !== '') {
           activeObject.set('fill', activeColor);
         }
+      } else if (activeObject.type === 'i-text') {
+        activeObject.set('fill', activeColor);
       } else {
         activeObject.set('fill', activeColor);
       }

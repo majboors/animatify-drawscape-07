@@ -1,4 +1,4 @@
-import { Square, Circle, Pencil, MousePointer, Triangle as TriangleIcon, Star, Minus, Copy, Clipboard, PaintBucket } from "lucide-react";
+import { Square, Circle, Pencil, MousePointer, Triangle as TriangleIcon, Star, Minus, Copy, Clipboard, PaintBucket, Type } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 
@@ -27,6 +27,7 @@ export const Toolbar = ({
     { id: "triangle", icon: TriangleIcon, label: "Triangle" },
     { id: "line", icon: Minus, label: "Line" },
     { id: "star", icon: Star, label: "Star" },
+    { id: "text", icon: Type, label: "Text" },
   ];
 
   const actions = [
