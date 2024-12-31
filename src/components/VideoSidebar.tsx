@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
-import { Video, X, Trash2, Play } from "lucide-react";
+import { Video, Trash2, Play } from "lucide-react";
 import { Button } from "./ui/button";
-import { Input } from "./ui/input";
 import { toast } from "sonner";
 import { loadBoardStates } from "@/utils/boardState";
 import { supabase } from "@/integrations/supabase/client";
@@ -68,10 +67,9 @@ export const VideoSidebar = ({
       if (error) throw error;
       setRecordings(data || []);
       
-      // Load board states for each recording
+      // Load board states for the first recording if available
       if (data && data.length > 0) {
-        const firstRecording = data[0];
-        await loadBoardStatesForRecording(firstRecording.id);
+        await loadBoardStatesForRecording(data[0].id);
       }
     } catch (error) {
       console.error('Error loading recordings:', error);
@@ -88,7 +86,10 @@ export const VideoSidebar = ({
 
       if (error) throw error;
       
-      await loadRecordings(selectedProject.id);
+      // Reload recordings after deletion
+      if (selectedProject) {
+        await loadRecordings(selectedProject.id);
+      }
       toast.success("Recording deleted");
     } catch (error) {
       console.error('Error deleting recording:', error);
@@ -104,6 +105,47 @@ export const VideoSidebar = ({
     } catch (error) {
       console.error('Error loading board states:', error);
       toast.error("Failed to load board states");
+    }
+  };
+
+  const playRecording = async (recordingId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('recordings')
+        .select('video_data')
+        .eq('id', recordingId)
+        .single();
+
+      if (error) throw error;
+
+      if (data?.video_data) {
+        const videoBlob = new Blob([data.video_data], { type: 'video/webm' });
+        const videoUrl = URL.createObjectURL(videoBlob);
+        // Create a video element to play the recording
+        const video = document.createElement('video');
+        video.src = videoUrl;
+        video.controls = true;
+        video.style.width = '100%';
+        video.style.maxWidth = '400px';
+        
+        // Create a dialog to show the video
+        const dialog = document.createElement('dialog');
+        dialog.style.padding = '20px';
+        dialog.appendChild(video);
+        document.body.appendChild(dialog);
+        dialog.showModal();
+        
+        // Clean up when dialog is closed
+        dialog.addEventListener('close', () => {
+          URL.revokeObjectURL(videoUrl);
+          dialog.remove();
+        });
+      } else {
+        toast.error("No video data found for this recording");
+      }
+    } catch (error) {
+      console.error('Error playing recording:', error);
+      toast.error("Failed to play recording");
     }
   };
 
@@ -142,9 +184,17 @@ export const VideoSidebar = ({
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => loadBoardStatesForRecording(recording.id)}
+                        onClick={() => playRecording(recording.id)}
                       >
                         <Play className="h-4 w-4 mr-1" />
+                        Play Video
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => loadBoardStatesForRecording(recording.id)}
+                      >
+                        <Video className="h-4 w-4 mr-1" />
                         View Boards
                       </Button>
                       <Button

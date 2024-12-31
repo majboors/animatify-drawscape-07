@@ -36,6 +36,7 @@ export const CameraControls = ({
   const [currentProjectId, setCurrentProjectId] = useState<string | null>(null);
   const [mediaRecorder, setMediaRecorder] = useState<MediaRecorder | null>(null);
   const [recordedChunks, setRecordedChunks] = useState<Blob[]>([]);
+  const [currentRecordingId, setCurrentRecordingId] = useState<string | null>(null);
 
   const startRecording = async () => {
     try {
@@ -44,7 +45,9 @@ export const CameraControls = ({
         audio: true 
       });
       
-      const recorder = new MediaRecorder(stream);
+      const recorder = new MediaRecorder(stream, {
+        mimeType: 'video/webm;codecs=vp9,opus'
+      });
       
       recorder.ondataavailable = (event) => {
         if (event.data.size > 0) {
@@ -52,12 +55,44 @@ export const CameraControls = ({
         }
       };
       
-      recorder.onstop = () => {
+      recorder.onstop = async () => {
         const blob = new Blob(recordedChunks, { type: 'video/webm' });
-        const url = URL.createObjectURL(blob);
-        console.log('Recording saved:', url);
-        // Here you could save the video to Supabase storage
+        const videoUrl = URL.createObjectURL(blob);
+        console.log('Recording saved:', videoUrl);
+        
+        if (currentRecordingId) {
+          // Save the video data to the recordings table
+          const { error: updateError } = await supabase
+            .from('recordings')
+            .update({ video_data: blob })
+            .eq('id', currentRecordingId);
+
+          if (updateError) {
+            console.error('Error saving video:', updateError);
+            toast.error("Failed to save video recording");
+          } else {
+            toast.success("Video recording saved successfully");
+          }
+        }
       };
+      
+      // Create a new recording entry before starting
+      const { data: recordingData, error: recordingError } = await supabase
+        .from('recordings')
+        .insert([
+          { 
+            name: `Recording ${new Date().toLocaleString()}`,
+            project_id: currentProjectId 
+          }
+        ])
+        .select()
+        .single();
+
+      if (recordingError) {
+        throw recordingError;
+      }
+
+      setCurrentRecordingId(recordingData.id);
       
       recorder.start();
       setMediaRecorder(recorder);
@@ -75,6 +110,7 @@ export const CameraControls = ({
       mediaRecorder.stream.getTracks().forEach(track => track.stop());
       setIsRecording(false);
       setCurrentProjectId(null);
+      setCurrentRecordingId(null);
       toast.success("Recording stopped");
     }
   };
@@ -151,7 +187,17 @@ export const CameraControls = ({
               <List className="h-4 w-4" />
             </Button>
             {isRecording && (
-              <Button variant="outline" size="icon" onClick={onSaveBoard}>
+              <Button 
+                variant="outline" 
+                size="icon" 
+                onClick={() => {
+                  if (currentRecordingId) {
+                    onSaveBoard();
+                  } else {
+                    toast.error("No active recording to save board state");
+                  }
+                }}
+              >
                 <Save className="h-4 w-4" />
               </Button>
             )}
