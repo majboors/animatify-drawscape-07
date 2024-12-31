@@ -65,7 +65,7 @@ export const useRecording = ({
           const { error: updateError } = await supabase
             .from('recordings')
             .update({ 
-              video_data: uint8Array.buffer 
+              video_data: uint8Array 
             })
             .eq('id', currentRecordingId);
 
