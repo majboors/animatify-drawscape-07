@@ -22,6 +22,39 @@ export const Canvas = forwardRef<CanvasRef, CanvasProps>(({ activeTool, activeCo
   const [fabricCanvas, setFabricCanvas] = useState<ExtendedCanvas | null>(null);
   const [clipboard, setClipboard] = useState<string | null>(null);
 
+  // Create local functions for group and ungroup
+  const handleGroup = () => {
+    if (!fabricCanvas) return;
+    
+    const activeSelection = fabricCanvas.getActiveObject();
+    if (!activeSelection || !activeSelection.type.includes('Selection')) {
+      toast.error("Select multiple objects first!");
+      return;
+    }
+
+    if (activeSelection.type === 'activeSelection') {
+      // @ts-ignore - fabric.js types are not complete
+      activeSelection.toGroup();
+      fabricCanvas.requestRenderAll();
+      toast.success("Objects grouped!");
+    }
+  };
+
+  const handleUngroup = () => {
+    if (!fabricCanvas) return;
+    
+    const activeObject = fabricCanvas.getActiveObject();
+    if (!activeObject || activeObject.type !== 'group') {
+      toast.error("Select a group first!");
+      return;
+    }
+
+    // @ts-ignore - fabric.js types are not complete
+    activeObject.toActiveSelection();
+    fabricCanvas.requestRenderAll();
+    toast.success("Group ungrouped!");
+  };
+
   useImperativeHandle(ref, () => ({
     copy: () => {
       if (!fabricCanvas) return;
@@ -31,7 +64,6 @@ export const Canvas = forwardRef<CanvasRef, CanvasProps>(({ activeTool, activeCo
         return;
       }
       
-      // Store the object as a JSON string
       setClipboard(JSON.stringify(activeObject.toJSON()));
       toast.success("Object copied!");
     },
@@ -42,10 +74,8 @@ export const Canvas = forwardRef<CanvasRef, CanvasProps>(({ activeTool, activeCo
       }
       
       try {
-        // Parse the stored JSON
         const objectData = JSON.parse(clipboard);
         
-        // Use enlivenObjects with the correct options format
         util.enlivenObjects([objectData], {
           reviver: (obj: FabricObject) => {
             obj.set({
@@ -65,36 +95,8 @@ export const Canvas = forwardRef<CanvasRef, CanvasProps>(({ activeTool, activeCo
         toast.error("Failed to paste object");
       }
     },
-    group: () => {
-      if (!fabricCanvas) return;
-      
-      const activeSelection = fabricCanvas.getActiveObject();
-      if (!activeSelection || !activeSelection.type.includes('Selection')) {
-        toast.error("Select multiple objects first!");
-        return;
-      }
-
-      if (activeSelection.type === 'activeSelection') {
-        // @ts-ignore - fabric.js types are not complete
-        activeSelection.toGroup();
-        fabricCanvas.requestRenderAll();
-        toast.success("Objects grouped!");
-      }
-    },
-    ungroup: () => {
-      if (!fabricCanvas) return;
-      
-      const activeObject = fabricCanvas.getActiveObject();
-      if (!activeObject || activeObject.type !== 'group') {
-        toast.error("Select a group first!");
-        return;
-      }
-
-      // @ts-ignore - fabric.js types are not complete
-      activeObject.toActiveSelection();
-      fabricCanvas.requestRenderAll();
-      toast.success("Group ungrouped!");
-    }
+    group: handleGroup,
+    ungroup: handleUngroup
   }));
 
   useEffect(() => {
@@ -237,18 +239,16 @@ export const Canvas = forwardRef<CanvasRef, CanvasProps>(({ activeTool, activeCo
       if ((e.ctrlKey || e.metaKey) && e.key === 'g') {
         e.preventDefault();
         if (e.shiftKey) {
-          // Ungroup (Ctrl/Cmd + Shift + G)
-          ref.current?.ungroup();
+          handleUngroup();
         } else {
-          // Group (Ctrl/Cmd + G)
-          ref.current?.group();
+          handleGroup();
         }
       }
     };
 
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [fabricCanvas, ref]);
+  }, [fabricCanvas]);
 
   return (
     <div className="w-full h-[calc(100vh-64px)] bg-gray-50 overflow-hidden">
