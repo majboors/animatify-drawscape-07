@@ -1,4 +1,4 @@
-import { Square, Circle, Pencil, MousePointer, Triangle as TriangleIcon, Star, Minus, Copy, Clipboard, PaintBucket, Type, Group as GroupIcon, Ungroup } from "lucide-react";
+import { Square, Circle, Pencil, MousePointer, Triangle as TriangleIcon, Star, Minus, Copy, Clipboard, PaintBucket, Type, Group as GroupIcon, Ungroup, Save } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import {
@@ -14,6 +14,7 @@ interface ToolbarProps {
   activeTool: string;
   activeColor: string;
   activeFont?: string;
+  isRecording?: boolean;
   onToolChange: (tool: string) => void;
   onColorChange: (color: string) => void;
   onFontChange?: (font: string) => void;
@@ -21,19 +22,22 @@ interface ToolbarProps {
   onPaste?: () => void;
   onGroup?: () => void;
   onUngroup?: () => void;
+  onSaveBoard?: () => void;
 }
 
 export const Toolbar = ({ 
   activeTool, 
   activeColor, 
   activeFont,
+  isRecording = false,
   onToolChange, 
   onColorChange,
   onFontChange,
   onCopy,
   onPaste,
   onGroup,
-  onUngroup
+  onUngroup,
+  onSaveBoard
 }: ToolbarProps) => {
   const tools = [
     { id: "select", icon: MousePointer, label: "Select" },
@@ -93,6 +97,17 @@ export const Toolbar = ({
 
   return (
     <div className="bg-white border-b border-gray-200 p-2 flex items-center space-x-2">
+      {isRecording && (
+        <Button
+          variant="destructive"
+          size="sm"
+          onClick={onSaveBoard}
+          className="mr-2"
+        >
+          <Save className="h-4 w-4 mr-1" />
+          Save Board
+        </Button>
+      )}
       <div className="flex space-x-1">
         {tools.map((tool) => (
           <Button
