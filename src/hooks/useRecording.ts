@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -17,110 +17,88 @@ export const useRecording = ({
   setIsPaused,
   onSaveBoard,
 }: UseRecordingProps) => {
+  const [currentProjectId, setCurrentProjectId] = useState<string | null>(null);
+  const [showProjectDialog, setShowProjectDialog] = useState(false);
   const [mediaRecorder, setMediaRecorder] = useState<MediaRecorder | null>(null);
   const [recordedChunks, setRecordedChunks] = useState<Blob[]>([]);
-  const [currentProjectId, setCurrentProjectId] = useState<string | null>(null);
-  const [currentRecordingId, setCurrentRecordingId] = useState<string | null>(null);
 
-  const getSupportedMimeType = () => {
-    const mimeTypes = [
-      'video/webm;codecs=vp8,opus',
-      'video/webm;codecs=vp9,opus',
-      'video/webm',
-      ''  // Empty string lets browser choose
-    ];
-
-    for (const mimeType of mimeTypes) {
-      if (mimeType === '' || MediaRecorder.isTypeSupported(mimeType)) {
-        return mimeType;
-      }
-    }
-    return '';
-  };
-
-  const startRecording = async () => {
+  const startRecording = useCallback(async () => {
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ 
-        video: true,
-        audio: true 
-      });
-      
-      const mimeType = getSupportedMimeType();
-      const recorderOptions = mimeType ? { mimeType } : undefined;
-      
-      const recorder = new MediaRecorder(stream, recorderOptions);
+      const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+      const recorder = new MediaRecorder(stream);
       
       recorder.ondataavailable = (event) => {
         if (event.data.size > 0) {
           setRecordedChunks((prev) => [...prev, event.data]);
         }
       };
-      
+
       recorder.onstop = async () => {
-        const blob = new Blob(recordedChunks, { type: 'video/webm' });
+        const blob = new Blob(recordedChunks, { type: "video/webm" });
         const arrayBuffer = await blob.arrayBuffer();
         const uint8Array = new Uint8Array(arrayBuffer);
-        
-        if (currentRecordingId) {
+
+        if (currentProjectId) {
+          const { data: recordingData, error: recordingError } = await supabase
+            .from('recordings')
+            .insert([
+              { 
+                project_id: currentProjectId,
+                name: `Recording ${new Date().toISOString()}`,
+                video_data: uint8Array
+              }
+            ])
+            .select()
+            .single();
+
+          if (recordingError) {
+            console.error('Error saving recording:', recordingError);
+            toast.error("Failed to save recording");
+            return;
+          }
+
+          const currentRecordingId = recordingData.id;
+
+          // Update the recording with the video data
           const { error: updateError } = await supabase
             .from('recordings')
             .update({ 
-              video_data: uint8Array as unknown as string // Type assertion to match Supabase's expected type
+              video_data: uint8Array
             })
             .eq('id', currentRecordingId);
 
           if (updateError) {
-            console.error('Error saving video:', updateError);
-            toast.error("Failed to save video recording");
-          } else {
-            toast.success("Video recording saved successfully");
+            console.error('Error updating recording:', updateError);
+            toast.error("Failed to update recording");
+            return;
           }
+
+          toast.success("Recording saved successfully");
+          setRecordedChunks([]);
         }
       };
-      
-      const { data: recordingData, error: recordingError } = await supabase
-        .from('recordings')
-        .insert([
-          { 
-            name: `Recording ${new Date().toLocaleString()}`,
-            project_id: currentProjectId 
-          }
-        ])
-        .select()
-        .single();
 
-      if (recordingError) {
-        throw recordingError;
-      }
-
-      setCurrentRecordingId(recordingData.id);
-      
-      recorder.start();
       setMediaRecorder(recorder);
+      recorder.start();
       setIsRecording(true);
-      toast.success("Recording started with audio");
+      toast.success("Recording started");
     } catch (error) {
       console.error('Error starting recording:', error);
       toast.error("Failed to start recording");
     }
-  };
-
-  const stopRecording = () => {
-    if (mediaRecorder && mediaRecorder.state !== 'inactive') {
-      mediaRecorder.stop();
-      mediaRecorder.stream.getTracks().forEach(track => track.stop());
-      setIsRecording(false);
-      setCurrentProjectId(null);
-      setCurrentRecordingId(null);
-      toast.success("Recording stopped");
-    }
-  };
+  }, [currentProjectId, recordedChunks, setIsRecording]);
 
   const handleRecordingClick = () => {
-    if (isRecording) {
-      stopRecording();
+    if (!isRecording) {
+      setShowProjectDialog(true);
     } else {
-      startRecording();
+      if (mediaRecorder) {
+        mediaRecorder.stop();
+        const tracks = mediaRecorder.stream.getTracks();
+        tracks.forEach(track => track.stop());
+        setIsRecording(false);
+        setIsPaused(false);
+      }
     }
   };
 
@@ -128,19 +106,19 @@ export const useRecording = ({
     if (mediaRecorder) {
       if (isPaused) {
         mediaRecorder.resume();
+        setIsPaused(false);
+        toast.success("Recording resumed");
       } else {
         mediaRecorder.pause();
+        setIsPaused(true);
+        toast.success("Recording paused");
       }
-      setIsPaused(!isPaused);
     }
   };
 
   const handleSaveBoardClick = () => {
-    if (currentRecordingId) {
-      onSaveBoard();
-    } else {
-      toast.error("No active recording to save board state");
-    }
+    onSaveBoard();
+    toast.success("Board state saved");
   };
 
   return {
@@ -150,5 +128,6 @@ export const useRecording = ({
     currentProjectId,
     setCurrentProjectId,
     startRecording,
+    setShowProjectDialog,
   };
 };
