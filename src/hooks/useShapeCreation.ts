@@ -34,7 +34,7 @@ export const useShapeCreation = (
     };
 
     const handleToolAction = (options: { e: Event; pointer: { x: number; y: number } }) => {
-      if (!fabricCanvas || activeTool === "select" || activeTool === "draw") return;
+      if (!fabricCanvas || activeTool === "select" || activeTool === "draw" || activeTool === "text") return;
 
       const pointer = options.pointer;
       

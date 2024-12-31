@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState, forwardRef, useImperativeHandle } from "react";
-import { Canvas as FabricCanvas, Circle, Rect, Triangle, Line, PencilBrush, Object as FabricObject, Polygon, IText, util } from "fabric";
+import { Canvas as FabricCanvas, IText, Object as FabricObject, PencilBrush, util } from "fabric";
 import { toast } from "sonner";
 import { ExtendedCanvas } from "../types/fabric";
-import { fontFamilies } from "../utils/textUtils";
+import { useShapeCreation } from "../hooks/useShapeCreation";
 
 interface CanvasProps {
   activeTool: string;
@@ -22,7 +22,9 @@ export const Canvas = forwardRef<CanvasRef, CanvasProps>(({ activeTool, activeCo
   const [fabricCanvas, setFabricCanvas] = useState<ExtendedCanvas | null>(null);
   const [clipboard, setClipboard] = useState<string | null>(null);
 
-  // Create local functions for group and ungroup
+  // Use the shape creation hook
+  useShapeCreation(fabricCanvas, activeTool, activeColor);
+
   const handleGroup = () => {
     if (!fabricCanvas) return;
     
@@ -107,6 +109,7 @@ export const Canvas = forwardRef<CanvasRef, CanvasProps>(({ activeTool, activeCo
       height: window.innerHeight - 100,
       backgroundColor: "#ffffff",
       preserveObjectStacking: true,
+      selection: true, // Enable multiple selection
     }) as ExtendedCanvas;
 
     canvas.freeDrawingBrush = new PencilBrush(canvas);
@@ -134,6 +137,13 @@ export const Canvas = forwardRef<CanvasRef, CanvasProps>(({ activeTool, activeCo
     if (!fabricCanvas) return;
 
     fabricCanvas.isDrawingMode = activeTool === "draw";
+    
+    // Set selection mode when using select tool
+    if (activeTool === "select") {
+      fabricCanvas.selection = true;
+    } else {
+      fabricCanvas.selection = false;
+    }
     
     if (activeTool === "draw" && fabricCanvas.freeDrawingBrush) {
       fabricCanvas.freeDrawingBrush.color = activeColor;
