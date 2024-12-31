@@ -5,6 +5,7 @@ import { Canvas, CanvasRef } from "@/components/Canvas";
 const Index = () => {
   const [activeTool, setActiveTool] = useState("select");
   const [activeColor, setActiveColor] = useState("#0078D4");
+  const [activeFont, setActiveFont] = useState("Arial");
   const canvasRef = useRef<CanvasRef>(null);
 
   return (
@@ -13,12 +14,15 @@ const Index = () => {
         ref={canvasRef}
         activeTool={activeTool}
         activeColor={activeColor}
+        activeFont={activeFont}
       />
       <Toolbar
         activeTool={activeTool}
         activeColor={activeColor}
+        activeFont={activeFont}
         onToolChange={setActiveTool}
         onColorChange={setActiveColor}
+        onFontChange={setActiveFont}
         onCopy={() => canvasRef.current?.copy()}
         onPaste={() => canvasRef.current?.paste()}
       />

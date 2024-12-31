@@ -1,12 +1,22 @@
 import { Square, Circle, Pencil, MousePointer, Triangle as TriangleIcon, Star, Minus, Copy, Clipboard, PaintBucket, Type } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { fontFamilies } from "@/utils/textUtils";
 
 interface ToolbarProps {
   activeTool: string;
   activeColor: string;
+  activeFont?: string;
   onToolChange: (tool: string) => void;
   onColorChange: (color: string) => void;
+  onFontChange?: (font: string) => void;
   onCopy?: () => void;
   onPaste?: () => void;
 }
@@ -14,8 +24,10 @@ interface ToolbarProps {
 export const Toolbar = ({ 
   activeTool, 
   activeColor, 
+  activeFont,
   onToolChange, 
   onColorChange,
+  onFontChange,
   onCopy,
   onPaste 
 }: ToolbarProps) => {
@@ -37,7 +49,6 @@ export const Toolbar = ({
       label: "Copy", 
       onClick: () => {
         onCopy?.();
-        toast("Object copied!");
       }
     },
     { 
@@ -46,7 +57,6 @@ export const Toolbar = ({
       label: "Paste", 
       onClick: () => {
         onPaste?.();
-        toast("Object pasted!");
       }
     },
     { 
@@ -103,6 +113,26 @@ export const Toolbar = ({
           />
         ))}
       </div>
+      {activeTool === "text" && (
+        <>
+          <div className="w-px h-8 bg-gray-200 mx-2" />
+          <Select
+            value={activeFont}
+            onValueChange={onFontChange}
+          >
+            <SelectTrigger className="w-[180px]">
+              <SelectValue placeholder="Select font" />
+            </SelectTrigger>
+            <SelectContent>
+              {fontFamilies.map((font) => (
+                <SelectItem key={font} value={font}>
+                  {font}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </>
+      )}
     </div>
   );
 };

@@ -1,11 +1,13 @@
 import { useEffect, useRef, useState, forwardRef, useImperativeHandle } from "react";
-import { Canvas as FabricCanvas, Circle, Rect, Triangle, Line, PencilBrush, Object as FabricObject, Polygon, util, IText } from "fabric";
+import { Canvas as FabricCanvas, Circle, Rect, Triangle, Line, PencilBrush, Object as FabricObject, Polygon, IText, util } from "fabric";
 import { toast } from "sonner";
 import { ExtendedCanvas } from "../types/fabric";
+import { fontFamilies } from "../utils/textUtils";
 
 interface CanvasProps {
   activeTool: string;
   activeColor: string;
+  activeFont?: string;
 }
 
 export interface CanvasRef {
@@ -13,12 +15,11 @@ export interface CanvasRef {
   paste: () => void;
 }
 
-export const Canvas = forwardRef<CanvasRef, CanvasProps>(({ activeTool, activeColor }, ref) => {
+export const Canvas = forwardRef<CanvasRef, CanvasProps>(({ activeTool, activeColor, activeFont }, ref) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [fabricCanvas, setFabricCanvas] = useState<ExtendedCanvas | null>(null);
   const [clipboard, setClipboard] = useState<string | null>(null);
 
-  // Expose copy and paste methods to parent
   useImperativeHandle(ref, () => ({
     copy: () => {
       if (!fabricCanvas) return;
@@ -111,7 +112,7 @@ export const Canvas = forwardRef<CanvasRef, CanvasProps>(({ activeTool, activeCo
         top: 100,
         fontSize: 20,
         fill: activeColor,
-        fontFamily: 'Arial'
+        fontFamily: activeFont || 'Arial'
       });
       fabricCanvas.add(text);
       fabricCanvas.setActiveObject(text);
@@ -119,9 +120,12 @@ export const Canvas = forwardRef<CanvasRef, CanvasProps>(({ activeTool, activeCo
       fabricCanvas.requestRenderAll();
     }
 
-    // Update active object color when color changes
+    // Update active object properties
     const activeObject = fabricCanvas.getActiveObject();
     if (activeObject && activeTool === "select") {
+      if (activeObject.type === 'i-text' && activeFont) {
+        activeObject.set('fontFamily', activeFont);
+      }
       if (activeObject.type === 'line') {
         activeObject.set('stroke', activeColor);
       } else if (activeObject.type === 'path') {
@@ -129,8 +133,6 @@ export const Canvas = forwardRef<CanvasRef, CanvasProps>(({ activeTool, activeCo
         if (activeObject.get('fill') !== null && activeObject.get('fill') !== '') {
           activeObject.set('fill', activeColor);
         }
-      } else if (activeObject.type === 'i-text') {
-        activeObject.set('fill', activeColor);
       } else {
         activeObject.set('fill', activeColor);
       }
@@ -193,7 +195,8 @@ export const Canvas = forwardRef<CanvasRef, CanvasProps>(({ activeTool, activeCo
     return () => {
       fabricCanvas.off("mouse:dblclick");
     };
-  }, [activeTool, activeColor, fabricCanvas]);
+
+  }, [activeTool, activeColor, activeFont, fabricCanvas]);
 
   return (
     <div className="w-full h-[calc(100vh-64px)] bg-gray-50 overflow-hidden">
