@@ -13,7 +13,6 @@ export const useProjectDialog = ({
   setCurrentProjectId,
   startRecording,
 }: UseProjectDialogProps) => {
-  const [showProjectDialog, setShowProjectDialog] = useState(false);
   const [projectName, setProjectName] = useState("");
 
   const handleCreateProject = async () => {
@@ -28,7 +27,6 @@ export const useProjectDialog = ({
 
       setCurrentProjectId(data.id);
       startRecording();
-      setShowProjectDialog(false);
       toast.success("Project created and recording started");
     } catch (error) {
       console.error('Error creating project:', error);
@@ -38,8 +36,6 @@ export const useProjectDialog = ({
 
   return {
     projectName,
-    showProjectDialog,
-    setShowProjectDialog,
     setProjectName,
     handleCreateProject,
   };

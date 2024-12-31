@@ -11,7 +11,6 @@ import {
 } from "./ui/dialog";
 import { Input } from "./ui/input";
 import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
 import { useRecording } from "@/hooks/useRecording";
 import { useProjectDialog } from "@/hooks/useProjectDialog";
 
@@ -33,17 +32,7 @@ export const CameraControls = ({
   setIsPaused,
 }: CameraControlsProps) => {
   const [showControls, setShowControls] = useState(false);
-  const {
-    projectName,
-    showProjectDialog,
-    setShowProjectDialog,
-    setProjectName,
-    handleCreateProject,
-  } = useProjectDialog({
-    setIsRecording,
-    setCurrentProjectId,
-    startRecording,
-  });
+  const [showProjectDialog, setShowProjectDialog] = useState(false);
   
   const {
     handleRecordingClick,
@@ -52,13 +41,22 @@ export const CameraControls = ({
     currentProjectId,
     setCurrentProjectId,
     startRecording,
-    setShowProjectDialog,
   } = useRecording({
     isRecording,
     setIsRecording,
     isPaused,
     setIsPaused,
     onSaveBoard,
+  });
+
+  const {
+    projectName,
+    setProjectName,
+    handleCreateProject,
+  } = useProjectDialog({
+    setIsRecording,
+    setCurrentProjectId,
+    startRecording,
   });
 
   return (
