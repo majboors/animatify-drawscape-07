@@ -38,7 +38,7 @@ export type Database = {
           },
         ]
       }
-      recordings: {
+      projects: {
         Row: {
           created_at: string
           id: string
@@ -55,6 +55,35 @@ export type Database = {
           name?: string
         }
         Relationships: []
+      }
+      recordings: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          project_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          project_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          project_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "recordings_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {

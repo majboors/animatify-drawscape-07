@@ -1,9 +1,8 @@
 import { useState, useRef } from "react";
 import { Toolbar } from "@/components/Toolbar";
 import { Canvas, CanvasRef } from "@/components/Canvas";
-import { CodeSidebar } from "@/components/CodeSidebar";
 import { VideoSidebar } from "@/components/VideoSidebar";
-import { UserCamera } from "@/components/UserCamera";
+import { CameraControls } from "@/components/CameraControls";
 import { saveBoardState } from "@/utils/boardState";
 
 const Index = () => {
@@ -11,6 +10,8 @@ const Index = () => {
   const [activeColor, setActiveColor] = useState("#0078D4");
   const [activeFont, setActiveFont] = useState("Arial");
   const [isRecording, setIsRecording] = useState(false);
+  const [isPaused, setIsPaused] = useState(false);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [currentRecordingId, setCurrentRecordingId] = useState<string | null>(null);
   const canvasRef = useRef<CanvasRef>(null);
 
@@ -41,9 +42,20 @@ const Index = () => {
         onUngroup={() => canvasRef.current?.ungroup()}
         onSaveBoard={handleSaveBoard}
       />
-      <CodeSidebar />
-      <VideoSidebar />
-      <UserCamera />
+      <VideoSidebar
+        isOpen={isSidebarOpen}
+        onOpenChange={setIsSidebarOpen}
+        currentRecordingId={currentRecordingId}
+        setCurrentRecordingId={setCurrentRecordingId}
+      />
+      <CameraControls
+        onToggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)}
+        onSaveBoard={handleSaveBoard}
+        isRecording={isRecording}
+        setIsRecording={setIsRecording}
+        isPaused={isPaused}
+        setIsPaused={setIsPaused}
+      />
     </div>
   );
 };
