@@ -32,18 +32,40 @@ export const Canvas = ({ activeTool, activeColor }: CanvasProps) => {
     if (activeObject && activeTool === "select") {
       if (activeObject.type === 'line') {
         activeObject.set('stroke', activeColor);
+      } else if (activeObject.type === 'path') {
+        // For pencil drawings (paths)
+        activeObject.set('stroke', activeColor);
+        activeObject.set('fill', activeColor);
       } else {
         activeObject.set('fill', activeColor);
       }
       fabricCanvas.requestRenderAll();
     }
 
-    // Add object:modified event listener to update color when object is selected
+    // Add object:added event listener to handle pencil drawings
+    fabricCanvas.on('path:created', (e: any) => {
+      const path = e.path;
+      if (path) {
+        // Make the path selectable and fillable
+        path.set({
+          selectable: true,
+          fill: activeColor,
+          perPixelTargetFind: true
+        });
+        fabricCanvas.requestRenderAll();
+      }
+    });
+
+    // Add selection:created event listener to update color when object is selected
     fabricCanvas.on('selection:created', (e) => {
       if (activeTool === "select" && e.selected) {
         const selectedObject = e.selected[0];
         if (selectedObject.type === 'line') {
           selectedObject.set('stroke', activeColor);
+        } else if (selectedObject.type === 'path') {
+          // For pencil drawings (paths)
+          selectedObject.set('stroke', activeColor);
+          selectedObject.set('fill', activeColor);
         } else {
           selectedObject.set('fill', activeColor);
         }
