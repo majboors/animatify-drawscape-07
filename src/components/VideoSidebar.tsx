@@ -54,7 +54,9 @@ export const VideoSidebar = ({
       
       if (data && data.length > 0) {
         setProjects(data);
-        setSelectedProject(data[0]);
+        setSelectedProject(data[0]); // Auto-select first project
+      } else {
+        toast.info("No projects found. Create a new project to start recording.");
       }
     } catch (error) {
       console.error('Error loading projects:', error);
@@ -75,11 +77,14 @@ export const VideoSidebar = ({
 
       if (error) throw error;
 
-      setRecordings(data || []);
       if (data && data.length > 0) {
+        setRecordings(data);
+        // Load board states for the first recording
         await loadBoardStatesForRecording(data[0].id);
       } else {
+        setRecordings([]);
         setBoardStates([]);
+        toast.info("No recordings found for this project. Start recording to create one.");
       }
     } catch (error) {
       console.error('Error loading recordings:', error);
@@ -240,7 +245,7 @@ export const VideoSidebar = ({
                       ))
                     ) : (
                       <div className="text-center text-gray-500 py-4">
-                        No recordings found for this project
+                        No recordings found for this project. Start recording to create one.
                       </div>
                     )}
                   </div>

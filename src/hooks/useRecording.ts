@@ -36,35 +36,31 @@ export const useRecording = ({
       recorder.onstop = async () => {
         try {
           const blob = new Blob(recordedChunks, { type: "video/webm" });
-          const reader = new FileReader();
-          
-          reader.onloadend = async () => {
-            try {
-              const base64data = (reader.result as string).split(',')[1];
-              
-              if (currentProjectId) {
-                const { error: recordingError } = await supabase
-                  .from('recordings')
-                  .insert({
-                    project_id: currentProjectId,
-                    name: `Recording ${new Date().toISOString()}`,
-                    video_data: base64data
-                  });
+          const base64String = await new Promise<string>((resolve) => {
+            const reader = new FileReader();
+            reader.onloadend = () => {
+              const base64 = reader.result as string;
+              resolve(base64.split(',')[1]); // Remove data URL prefix
+            };
+            reader.readAsDataURL(blob);
+          });
 
-                if (recordingError) throw recordingError;
-                toast.success("Recording saved successfully");
-                setRecordedChunks([]);
-              }
-            } catch (error) {
-              console.error('Error saving recording:', error);
-              toast.error("Failed to save recording");
-            }
-          };
+          if (currentProjectId) {
+            const { error: recordingError } = await supabase
+              .from('recordings')
+              .insert({
+                project_id: currentProjectId,
+                name: `Recording ${new Date().toISOString()}`,
+                video_data: base64String
+              });
 
-          reader.readAsDataURL(blob);
+            if (recordingError) throw recordingError;
+            toast.success("Recording saved successfully");
+            setRecordedChunks([]);
+          }
         } catch (error) {
-          console.error('Error processing recording:', error);
-          toast.error("Failed to process recording");
+          console.error('Error saving recording:', error);
+          toast.error("Failed to save recording");
         }
       };
 
@@ -74,7 +70,7 @@ export const useRecording = ({
       toast.success("Recording started");
     } catch (error) {
       console.error('Error starting recording:', error);
-      toast.error("Failed to start recording");
+      toast.error("Failed to start recording. Please make sure you have granted camera permissions.");
     }
   }, [currentProjectId, recordedChunks, setIsRecording]);
 
