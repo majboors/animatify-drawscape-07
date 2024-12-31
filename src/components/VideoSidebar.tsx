@@ -53,72 +53,70 @@ export const VideoSidebar = () => {
         <Video className="h-4 w-4" />
       </Button>
 
-      <div
-        className={`fixed top-0 left-0 h-full bg-white border-r border-gray-200 transition-all duration-300 ${
-          isOpen ? "w-1/3" : "w-0"
-        }`}
-      >
-        <div className="p-4">
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-lg font-semibold">Video Recording</h2>
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={() => setIsOpen(false)}
-            >
-              <X className="h-4 w-4" />
-            </Button>
-          </div>
+      {isOpen && (
+        <div className="fixed top-0 left-0 h-full w-1/3 bg-white border-r border-gray-200 transition-all duration-300">
+          <div className="p-4">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-lg font-semibold">Video Recording</h2>
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={() => setIsOpen(false)}
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
 
-          <div className="space-y-4">
-            <Input
-              type="text"
-              placeholder="Project Name"
-              value={projectName}
-              onChange={(e) => setProjectName(e.target.value)}
-            />
+            <div className="space-y-4">
+              <Input
+                type="text"
+                placeholder="Project Name"
+                value={projectName}
+                onChange={(e) => setProjectName(e.target.value)}
+              />
 
-            <Button
-              onClick={isRecording ? stopRecording : startRecording}
-              variant={isRecording ? "destructive" : "default"}
-            >
-              {isRecording ? "Stop Recording" : "Start Recording"}
-            </Button>
+              <Button
+                onClick={isRecording ? stopRecording : startRecording}
+                variant={isRecording ? "destructive" : "default"}
+              >
+                {isRecording ? "Stop Recording" : "Start Recording"}
+              </Button>
 
-            {recordings.length > 0 && (
-              <div className="mt-4">
-                <h3 className="font-semibold mb-2">Recordings</h3>
-                <div className="space-y-2">
-                  {recordings.map((recording, index) => (
-                    <div
-                      key={index}
-                      className="flex items-center justify-between p-2 bg-gray-100 rounded-md"
-                    >
-                      <span>{recording.name}</span>
-                      <div className="space-x-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => window.open(recording.url)}
-                        >
-                          View
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => openBoard(recording.name)}
-                        >
-                          Open Board
-                        </Button>
+              {recordings.length > 0 && (
+                <div className="mt-4">
+                  <h3 className="font-semibold mb-2">Recordings</h3>
+                  <div className="space-y-2">
+                    {recordings.map((recording, index) => (
+                      <div
+                        key={index}
+                        className="flex items-center justify-between p-2 bg-gray-100 rounded-md"
+                      >
+                        <span>{recording.name}</span>
+                        <div className="space-x-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => window.open(recording.url)}
+                          >
+                            View
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => openBoard(recording.name)}
+                          >
+                            Open Board
+                          </Button>
+                        </div>
                       </div>
-                    </div>
-                  ))}
+                    ))}
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
+            </div>
           </div>
         </div>
-      </div>
+      )}
     </>
   );
 };
