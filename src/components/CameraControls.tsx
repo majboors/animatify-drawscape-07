@@ -39,12 +39,20 @@ export const CameraControls = ({
     setShowProjectDialog,
     setProjectName,
     handleCreateProject,
-  } = useProjectDialog(setIsRecording);
+  } = useProjectDialog({
+    setIsRecording,
+    setCurrentProjectId,
+    startRecording,
+  });
   
   const {
     handleRecordingClick,
     handlePauseResume,
     handleSaveBoardClick,
+    currentProjectId,
+    setCurrentProjectId,
+    startRecording,
+    setShowProjectDialog,
   } = useRecording({
     isRecording,
     setIsRecording,

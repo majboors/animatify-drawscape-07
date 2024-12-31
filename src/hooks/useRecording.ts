@@ -21,6 +21,7 @@ export const useRecording = ({
   const [recordedChunks, setRecordedChunks] = useState<Blob[]>([]);
   const [currentProjectId, setCurrentProjectId] = useState<string | null>(null);
   const [currentRecordingId, setCurrentRecordingId] = useState<string | null>(null);
+  const [showProjectDialog, setShowProjectDialog] = useState(false);
 
   const getSupportedMimeType = () => {
     const mimeTypes = [
@@ -64,7 +65,9 @@ export const useRecording = ({
         if (currentRecordingId) {
           const { error: updateError } = await supabase
             .from('recordings')
-            .update({ video_data: uint8Array })
+            .update({ 
+              video_data: uint8Array 
+            })
             .eq('id', currentRecordingId);
 
           if (updateError) {
@@ -152,5 +155,7 @@ export const useRecording = ({
     handleSaveBoardClick,
     currentProjectId,
     setCurrentProjectId,
+    startRecording,
+    setShowProjectDialog,
   };
 };

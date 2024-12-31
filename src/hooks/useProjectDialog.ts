@@ -2,7 +2,17 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 
-export const useProjectDialog = (setIsRecording: (isRecording: boolean) => void) => {
+interface UseProjectDialogProps {
+  setIsRecording: (isRecording: boolean) => void;
+  setCurrentProjectId: (id: string | null) => void;
+  startRecording: () => Promise<void>;
+}
+
+export const useProjectDialog = ({
+  setIsRecording,
+  setCurrentProjectId,
+  startRecording,
+}: UseProjectDialogProps) => {
   const [showProjectDialog, setShowProjectDialog] = useState(false);
   const [projectName, setProjectName] = useState("");
 

@@ -119,7 +119,9 @@ export const VideoSidebar = ({
       if (error) throw error;
 
       if (data?.video_data) {
-        const uint8Array = new Uint8Array(Object.values(data.video_data));
+        // Convert the video data to Uint8Array
+        const videoData = data.video_data as unknown as Record<string, number>;
+        const uint8Array = new Uint8Array(Object.values(videoData));
         const blob = new Blob([uint8Array], { type: 'video/webm' });
         const videoUrl = URL.createObjectURL(blob);
         
