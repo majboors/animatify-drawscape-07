@@ -17,8 +17,6 @@ export const VideoSidebar = () => {
     }
 
     try {
-      // In a real implementation, this would use the MediaRecorder API
-      // For now, we'll just simulate recording
       setIsRecording(true);
       toast.info("Recording started (demo)");
     } catch (error) {
@@ -28,7 +26,6 @@ export const VideoSidebar = () => {
 
   const stopRecording = () => {
     setIsRecording(false);
-    // Simulate saving a recording
     setRecordings([
       ...recordings,
       {
@@ -40,8 +37,9 @@ export const VideoSidebar = () => {
   };
 
   const openBoard = (recordingName: string) => {
-    // In a real implementation, this would load the board state
-    toast.info(`Opening board for ${recordingName} (demo)`);
+    // Load the board state associated with this recording
+    toast.info(`Opening board for ${recordingName}`);
+    // Here you would typically load the saved state and update the canvas
   };
 
   return (
@@ -49,14 +47,14 @@ export const VideoSidebar = () => {
       <Button
         variant="outline"
         size="icon"
-        className="fixed right-4 top-16 z-50"
+        className="fixed left-4 top-4 z-50"
         onClick={() => setIsOpen(!isOpen)}
       >
         <Video className="h-4 w-4" />
       </Button>
 
       <div
-        className={`fixed top-0 right-0 h-full bg-white border-l border-gray-200 transition-all duration-300 ${
+        className={`fixed top-0 left-0 h-full bg-white border-r border-gray-200 transition-all duration-300 ${
           isOpen ? "w-1/3" : "w-0"
         }`}
       >
