@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Video, Trash2, Play } from "lucide-react";
+import { Video, Trash2, Play, Code } from "lucide-react";
 import { Button } from "./ui/button";
 import { toast } from "sonner";
 import { loadBoardStates } from "@/utils/boardState";
@@ -53,6 +53,7 @@ export const VideoSidebar = ({
       if (error) throw error;
       
       if (data && data.length > 0) {
+        console.log("Projects loaded:", data);
         setProjects(data);
         setSelectedProject(data[0]); // Auto-select first project
       } else {
@@ -69,6 +70,7 @@ export const VideoSidebar = ({
   const loadRecordings = async (projectId: string) => {
     try {
       setIsLoading(true);
+      console.log("Loading recordings for project:", projectId);
       const { data, error } = await supabase
         .from('recordings')
         .select('*')
@@ -78,6 +80,7 @@ export const VideoSidebar = ({
       if (error) throw error;
 
       if (data && data.length > 0) {
+        console.log("Recordings loaded:", data);
         setRecordings(data);
         // Load board states for the first recording
         await loadBoardStatesForRecording(data[0].id);
@@ -119,7 +122,9 @@ export const VideoSidebar = ({
   const loadBoardStatesForRecording = async (recordingId: string) => {
     try {
       setIsLoading(true);
+      console.log("Loading board states for recording:", recordingId);
       const states = await loadBoardStates(recordingId);
+      console.log("Board states loaded:", states);
       setBoardStates(states);
       setCurrentRecordingId(recordingId);
     } catch (error) {
@@ -133,6 +138,7 @@ export const VideoSidebar = ({
   const playRecording = async (recordingId: string) => {
     try {
       setIsLoading(true);
+      console.log("Playing recording:", recordingId);
       const { data, error } = await supabase
         .from('recordings')
         .select('video_data')
@@ -182,7 +188,10 @@ export const VideoSidebar = ({
     <Sheet open={isOpen} onOpenChange={onOpenChange}>
       <SheetContent side="left" className="w-[400px] sm:w-[540px]">
         <SheetHeader>
-          <SheetTitle>Projects & Recordings</SheetTitle>
+          <SheetTitle className="flex items-center gap-2">
+            <Code className="h-5 w-5" />
+            Projects & Recordings
+          </SheetTitle>
         </SheetHeader>
         
         <div className="mt-4 space-y-4">

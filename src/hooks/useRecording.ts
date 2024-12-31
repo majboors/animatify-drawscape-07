@@ -25,17 +25,30 @@ export const useRecording = ({
 
   const startRecording = useCallback(async () => {
     try {
-      console.log("Requesting media permissions...");
-      const stream = await navigator.mediaDevices.getUserMedia({ 
+      console.log("Requesting screen and audio permissions...");
+      
+      // Get screen capture stream
+      const screenStream = await navigator.mediaDevices.getDisplayMedia({ 
         video: true,
         audio: true 
       });
+
+      // Get microphone stream
+      const micStream = await navigator.mediaDevices.getUserMedia({ 
+        audio: true 
+      });
+
+      // Combine the streams
+      const combinedStream = new MediaStream([
+        ...screenStream.getVideoTracks(),
+        ...micStream.getAudioTracks()
+      ]);
       
-      console.log("Media permissions granted, setting up preview...");
-      setPreviewStream(stream);
+      console.log("Permissions granted, setting up preview...");
+      setPreviewStream(combinedStream);
 
       console.log("Creating MediaRecorder...");
-      const recorder = new MediaRecorder(stream, {
+      const recorder = new MediaRecorder(combinedStream, {
         mimeType: 'video/webm;codecs=vp9'
       });
       
@@ -71,7 +84,10 @@ export const useRecording = ({
                   video_data: base64data
                 });
 
-              if (recordingError) throw recordingError;
+              if (recordingError) {
+                console.error('Error saving recording:', recordingError);
+                throw recordingError;
+              }
               toast.success("Recording saved successfully");
               setRecordedChunks([]);
             }
@@ -105,7 +121,7 @@ export const useRecording = ({
       recorder.start(1000); // Collect data every second
     } catch (error) {
       console.error('Error starting recording:', error);
-      toast.error("Failed to start recording. Please make sure you have granted camera permissions.");
+      toast.error("Failed to start recording. Please make sure you have granted screen and microphone permissions.");
     }
   }, [currentProjectId, recordedChunks, setIsRecording, setIsPaused]);
 
@@ -143,9 +159,9 @@ export const useRecording = ({
     }
   };
 
-  const handleSaveBoardClick = () => {
+  const handleSaveBoardClick = async () => {
     console.log("Saving board state");
-    onSaveBoard();
+    await onSaveBoard();
     toast.success("Board state saved");
   };
 
