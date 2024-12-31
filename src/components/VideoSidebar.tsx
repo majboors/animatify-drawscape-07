@@ -54,9 +54,7 @@ export const VideoSidebar = ({
       
       if (data && data.length > 0) {
         setProjects(data);
-        setSelectedProject(data[0]); // Auto-select first project
-      } else {
-        toast.info("No projects found");
+        setSelectedProject(data[0]);
       }
     } catch (error) {
       console.error('Error loading projects:', error);
@@ -77,14 +75,11 @@ export const VideoSidebar = ({
 
       if (error) throw error;
 
+      setRecordings(data || []);
       if (data && data.length > 0) {
-        setRecordings(data);
-        // Load board states for the first recording
         await loadBoardStatesForRecording(data[0].id);
       } else {
-        setRecordings([]);
         setBoardStates([]);
-        toast.info("No recordings found for this project");
       }
     } catch (error) {
       console.error('Error loading recordings:', error);
@@ -104,7 +99,6 @@ export const VideoSidebar = ({
 
       if (error) throw error;
       
-      // Reload recordings after deletion
       if (selectedProject) {
         await loadRecordings(selectedProject.id);
       }
@@ -143,7 +137,13 @@ export const VideoSidebar = ({
       if (error) throw error;
 
       if (data?.video_data) {
-        const blob = new Blob([data.video_data], { type: 'video/webm' });
+        // Convert base64 to blob
+        const binaryString = atob(data.video_data);
+        const bytes = new Uint8Array(binaryString.length);
+        for (let i = 0; i < binaryString.length; i++) {
+          bytes[i] = binaryString.charCodeAt(i);
+        }
+        const blob = new Blob([bytes], { type: 'video/webm' });
         const videoUrl = URL.createObjectURL(blob);
         
         const video = document.createElement('video');
