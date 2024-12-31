@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Canvas as FabricCanvas, Circle, Rect, Triangle, Line, PencilBrush, Object as FabricObject } from "fabric";
+import { Canvas as FabricCanvas, Circle, Rect, Triangle, Line, PencilBrush, Object as FabricObject, Polygon } from "fabric";
 import { toast } from "sonner";
 
 interface CanvasProps {
@@ -67,7 +67,7 @@ export const Canvas = ({ activeTool, activeColor }: CanvasProps) => {
         });
       }
       
-      return new fabric.Polygon(points, {
+      return new Polygon(points, {
         fill: activeColor,
         left: x - outerRadius,
         top: y - outerRadius,
