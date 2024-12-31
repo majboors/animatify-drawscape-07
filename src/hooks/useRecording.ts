@@ -41,35 +41,17 @@ export const useRecording = ({
         if (currentProjectId) {
           const { data: recordingData, error: recordingError } = await supabase
             .from('recordings')
-            .insert([
-              { 
-                project_id: currentProjectId,
-                name: `Recording ${new Date().toISOString()}`,
-                video_data: uint8Array
-              }
-            ])
+            .insert({
+              project_id: currentProjectId,
+              name: `Recording ${new Date().toISOString()}`,
+              video_data: uint8Array
+            })
             .select()
             .single();
 
           if (recordingError) {
             console.error('Error saving recording:', recordingError);
             toast.error("Failed to save recording");
-            return;
-          }
-
-          const currentRecordingId = recordingData.id;
-
-          // Update the recording with the video data
-          const { error: updateError } = await supabase
-            .from('recordings')
-            .update({ 
-              video_data: uint8Array
-            })
-            .eq('id', currentRecordingId);
-
-          if (updateError) {
-            console.error('Error updating recording:', updateError);
-            toast.error("Failed to update recording");
             return;
           }
 
