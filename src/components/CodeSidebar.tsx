@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Code, Maximize, Minimize, X } from "lucide-react";
+import { Code2, Maximize, Minimize, X } from "lucide-react";
 import { Button } from "./ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
 import { Textarea } from "./ui/textarea";
@@ -36,7 +36,7 @@ export const CodeSidebar = () => {
         className="fixed right-4 top-4 z-50"
         onClick={() => setIsOpen(!isOpen)}
       >
-        <Code className="h-4 w-4" />
+        <Code2 className="h-4 w-4" />
       </Button>
 
       <div className={sidebarClasses}>
