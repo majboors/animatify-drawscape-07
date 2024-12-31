@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Camera, Video, Pause, Play, List, Save } from "lucide-react";
 import { Button } from "./ui/button";
 import {
@@ -33,6 +33,7 @@ export const CameraControls = ({
 }: CameraControlsProps) => {
   const [showControls, setShowControls] = useState(false);
   const [showProjectDialog, setShowProjectDialog] = useState(false);
+  const videoPreviewRef = useRef<HTMLVideoElement>(null);
   
   const {
     handleRecordingClick,
@@ -41,6 +42,8 @@ export const CameraControls = ({
     currentProjectId,
     setCurrentProjectId,
     startRecording,
+    previewStream,
+    setPreviewStream,
   } = useRecording({
     isRecording,
     setIsRecording,
@@ -59,8 +62,24 @@ export const CameraControls = ({
     startRecording,
   });
 
+  // Handle preview stream
+  useEffect(() => {
+    if (videoPreviewRef.current && previewStream) {
+      videoPreviewRef.current.srcObject = previewStream;
+    }
+  }, [previewStream]);
+
   return (
     <div className="fixed bottom-4 right-4 z-50 flex flex-col items-end space-y-2">
+      {previewStream && (
+        <video
+          ref={videoPreviewRef}
+          autoPlay
+          playsInline
+          muted
+          className="rounded-lg w-48 h-36 object-cover border-2 border-white shadow-lg mb-2"
+        />
+      )}
       <div className="flex items-center space-x-2">
         {showControls && (
           <>
@@ -73,30 +92,30 @@ export const CameraControls = ({
               <Video className="h-4 w-4" />
             </Button>
             {isRecording && (
-              <Button
-                variant="outline"
-                size="icon"
-                onClick={handlePauseResume}
-              >
-                {isPaused ? (
-                  <Play className="h-4 w-4" />
-                ) : (
-                  <Pause className="h-4 w-4" />
-                )}
-              </Button>
+              <>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={handlePauseResume}
+                >
+                  {isPaused ? (
+                    <Play className="h-4 w-4" />
+                  ) : (
+                    <Pause className="h-4 w-4" />
+                  )}
+                </Button>
+                <Button 
+                  variant="outline" 
+                  size="icon" 
+                  onClick={handleSaveBoardClick}
+                >
+                  <Save className="h-4 w-4" />
+                </Button>
+              </>
             )}
             <Button variant="outline" size="icon" onClick={onToggleSidebar}>
               <List className="h-4 w-4" />
             </Button>
-            {isRecording && (
-              <Button 
-                variant="outline" 
-                size="icon" 
-                onClick={handleSaveBoardClick}
-              >
-                <Save className="h-4 w-4" />
-              </Button>
-            )}
           </>
         )}
         <Button

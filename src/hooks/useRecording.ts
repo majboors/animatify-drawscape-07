@@ -21,10 +21,16 @@ export const useRecording = ({
   const [showProjectDialog, setShowProjectDialog] = useState(false);
   const [mediaRecorder, setMediaRecorder] = useState<MediaRecorder | null>(null);
   const [recordedChunks, setRecordedChunks] = useState<Blob[]>([]);
+  const [previewStream, setPreviewStream] = useState<MediaStream | null>(null);
 
   const startRecording = useCallback(async () => {
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+      const stream = await navigator.mediaDevices.getUserMedia({ 
+        video: true,
+        audio: true 
+      });
+      
+      setPreviewStream(stream);
       const recorder = new MediaRecorder(stream);
       
       recorder.ondataavailable = (event) => {
@@ -84,6 +90,7 @@ export const useRecording = ({
         tracks.forEach(track => track.stop());
         setIsRecording(false);
         setIsPaused(false);
+        setPreviewStream(null);
       }
     }
   };
@@ -116,5 +123,7 @@ export const useRecording = ({
     startRecording,
     showProjectDialog,
     setShowProjectDialog,
+    previewStream,
+    setPreviewStream,
   };
 };
