@@ -65,7 +65,7 @@ export const useRecording = ({
           const { error: updateError } = await supabase
             .from('recordings')
             .update({ 
-              video_data: uint8Array 
+              video_data: uint8Array as unknown as string // Type assertion to match Supabase's expected type
             })
             .eq('id', currentRecordingId);
 
