@@ -16,7 +16,7 @@ export interface CanvasRef {
 export const Canvas = forwardRef<CanvasRef, CanvasProps>(({ activeTool, activeColor }, ref) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [fabricCanvas, setFabricCanvas] = useState<ExtendedCanvas | null>(null);
-  const [clipboard, setClipboard] = useState<FabricObject | null>(null);
+  const [clipboard, setClipboard] = useState<string | null>(null);
 
   // Expose copy and paste methods to parent
   useImperativeHandle(ref, () => ({
@@ -28,35 +28,35 @@ export const Canvas = forwardRef<CanvasRef, CanvasProps>(({ activeTool, activeCo
         return;
       }
       
-      // Create a deep clone of the object
-      const json = activeObject.toJSON();
-      const serializedObject = JSON.stringify(json);
-      setClipboard(JSON.parse(serializedObject));
+      // Store the object as a JSON string
+      setClipboard(JSON.stringify(activeObject.toJSON()));
       toast.success("Object copied!");
     },
-    paste: () => {
+    paste: async () => {
       if (!fabricCanvas || !clipboard) {
         toast.error("Nothing to paste!");
         return;
       }
       
       try {
-        // Create new object from clipboard data
-        util.enlivenObjects([clipboard], (objects: FabricObject[]) => {
-          const pastedObj = objects[0];
-          if (pastedObj) {
-            pastedObj.set({
-              left: (pastedObj.left || 0) + 10,
-              top: (pastedObj.top || 0) + 10,
-              evented: true,
-            });
-            
-            fabricCanvas.add(pastedObj);
-            fabricCanvas.setActiveObject(pastedObj);
-            fabricCanvas.requestRenderAll();
-            toast.success("Object pasted!");
-          }
-        });
+        // Parse the stored JSON
+        const objectData = JSON.parse(clipboard);
+        // Create a new fabric object from the JSON
+        const newObject = await fabricCanvas.loadFromJSON({ objects: [objectData] });
+        
+        // Get the newly created object
+        const pastedObj = fabricCanvas.getObjects().slice(-1)[0];
+        if (pastedObj) {
+          pastedObj.set({
+            left: (pastedObj.left || 0) + 10,
+            top: (pastedObj.top || 0) + 10,
+            evented: true,
+          });
+          
+          fabricCanvas.setActiveObject(pastedObj);
+          fabricCanvas.requestRenderAll();
+          toast.success("Object pasted!");
+        }
       } catch (error) {
         console.error('Error pasting object:', error);
         toast.error("Failed to paste object");
@@ -185,7 +185,6 @@ export const Canvas = forwardRef<CanvasRef, CanvasProps>(({ activeTool, activeCo
       <canvas ref={canvasRef} className="w-full h-full" />
     </div>
   );
-
 });
 
 Canvas.displayName = 'Canvas';
