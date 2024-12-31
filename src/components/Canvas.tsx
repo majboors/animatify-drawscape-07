@@ -43,19 +43,21 @@ export const Canvas = forwardRef<CanvasRef, CanvasProps>(({ activeTool, activeCo
       try {
         // Create new object from clipboard data
         util.enlivenObjects([clipboard], {
-          callback: (objects: FabricObject[]) => {
-            const pastedObj = objects[0];
-            if (pastedObj) {
-              pastedObj.set({
-                left: (pastedObj.left || 0) + 10,
-                top: (pastedObj.top || 0) + 10,
-                evented: true,
-              });
-              
-              fabricCanvas.add(pastedObj);
-              fabricCanvas.setActiveObject(pastedObj);
-              fabricCanvas.requestRenderAll();
-              toast.success("Object pasted!");
+          options: {
+            onComplete: (objects: FabricObject[]) => {
+              const pastedObj = objects[0];
+              if (pastedObj) {
+                pastedObj.set({
+                  left: (pastedObj.left || 0) + 10,
+                  top: (pastedObj.top || 0) + 10,
+                  evented: true,
+                });
+                
+                fabricCanvas.add(pastedObj);
+                fabricCanvas.setActiveObject(pastedObj);
+                fabricCanvas.requestRenderAll();
+                toast.success("Object pasted!");
+              }
             }
           }
         });
@@ -187,6 +189,7 @@ export const Canvas = forwardRef<CanvasRef, CanvasProps>(({ activeTool, activeCo
       <canvas ref={canvasRef} className="w-full h-full" />
     </div>
   );
+
 });
 
 Canvas.displayName = 'Canvas';
