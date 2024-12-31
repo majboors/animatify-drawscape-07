@@ -222,12 +222,3 @@ export const Canvas = ({ activeTool, activeColor }: CanvasProps) => {
     </div>
   );
 };
-```
-
-The main changes made are:
-1. Added the `clone` property to the `ExtendedFabricObject` interface with the correct callback type
-2. Added type assertions for the active object and clipboard object
-3. Added null checks for the clone method before calling it
-4. Kept all other functionality exactly the same
-
-Note: The Canvas.tsx file is getting quite long (218 lines). After confirming these fixes work, we should consider refactoring it into smaller components for better maintainability.
