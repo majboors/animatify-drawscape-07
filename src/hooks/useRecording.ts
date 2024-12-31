@@ -25,66 +25,95 @@ export const useRecording = ({
 
   const startRecording = useCallback(async () => {
     try {
+      console.log("Starting recording...");
       const stream = await navigator.mediaDevices.getUserMedia({ 
         video: true,
         audio: true 
       });
       
       setPreviewStream(stream);
-      const recorder = new MediaRecorder(stream);
+      const recorder = new MediaRecorder(stream, {
+        mimeType: 'video/webm;codecs=vp9'
+      });
       
       recorder.ondataavailable = (event) => {
+        console.log("Data available:", event.data.size);
         if (event.data.size > 0) {
-          setRecordedChunks((prev) => [...prev, event.data]);
+          setRecordedChunks(prev => [...prev, event.data]);
         }
       };
 
       recorder.onstop = async () => {
+        console.log("Recording stopped, saving...");
         try {
           const blob = new Blob(recordedChunks, { type: "video/webm" });
-          const base64String = await new Promise<string>((resolve) => {
-            const reader = new FileReader();
-            reader.onloadend = () => {
-              const base64 = reader.result as string;
-              resolve(base64.split(',')[1]); // Remove data URL prefix
-            };
-            reader.readAsDataURL(blob);
-          });
+          const reader = new FileReader();
+          
+          reader.onloadend = async () => {
+            const base64data = (reader.result as string).split(',')[1];
+            console.log("Saving recording to database...");
+            
+            if (currentProjectId) {
+              const { error: recordingError } = await supabase
+                .from('recordings')
+                .insert({
+                  project_id: currentProjectId,
+                  name: `Recording ${new Date().toISOString()}`,
+                  video_data: base64data
+                });
 
-          if (currentProjectId) {
-            const { error: recordingError } = await supabase
-              .from('recordings')
-              .insert({
-                project_id: currentProjectId,
-                name: `Recording ${new Date().toISOString()}`,
-                video_data: base64String
-              });
+              if (recordingError) throw recordingError;
+              toast.success("Recording saved successfully");
+              setRecordedChunks([]);
+            }
+          };
 
-            if (recordingError) throw recordingError;
-            toast.success("Recording saved successfully");
-            setRecordedChunks([]);
-          }
+          reader.readAsDataURL(blob);
         } catch (error) {
           console.error('Error saving recording:', error);
           toast.error("Failed to save recording");
         }
       };
 
+      recorder.onstart = () => {
+        console.log("Recorder started");
+        setIsRecording(true);
+        toast.success("Recording started");
+      };
+
+      recorder.onpause = () => {
+        console.log("Recorder paused");
+        setIsPaused(true);
+        toast.success("Recording paused");
+      };
+
+      recorder.onresume = () => {
+        console.log("Recorder resumed");
+        setIsPaused(false);
+        toast.success("Recording resumed");
+      };
+
       setMediaRecorder(recorder);
-      recorder.start();
-      setIsRecording(true);
-      toast.success("Recording started");
+      recorder.start(1000); // Collect data every second
     } catch (error) {
       console.error('Error starting recording:', error);
       toast.error("Failed to start recording. Please make sure you have granted camera permissions.");
     }
-  }, [currentProjectId, recordedChunks, setIsRecording]);
+  }, [currentProjectId, recordedChunks, setIsRecording, setIsPaused]);
 
   const handleRecordingClick = () => {
+    console.log("Recording button clicked", { isRecording });
     if (!isRecording) {
-      setShowProjectDialog(true);
+      if (!currentProjectId) {
+        console.log("No project ID, showing dialog");
+        setShowProjectDialog(true);
+      } else {
+        console.log("Starting recording with existing project");
+        startRecording();
+      }
     } else {
-      if (mediaRecorder) {
+      console.log("Stopping recording");
+      if (mediaRecorder && mediaRecorder.state !== 'inactive') {
         mediaRecorder.stop();
         const tracks = mediaRecorder.stream.getTracks();
         tracks.forEach(track => track.stop());
@@ -96,20 +125,18 @@ export const useRecording = ({
   };
 
   const handlePauseResume = () => {
+    console.log("Pause/Resume clicked", { isPaused, mediaRecorder: mediaRecorder?.state });
     if (mediaRecorder) {
       if (isPaused) {
         mediaRecorder.resume();
-        setIsPaused(false);
-        toast.success("Recording resumed");
       } else {
         mediaRecorder.pause();
-        setIsPaused(true);
-        toast.success("Recording paused");
       }
     }
   };
 
   const handleSaveBoardClick = () => {
+    console.log("Saving board state");
     onSaveBoard();
     toast.success("Board state saved");
   };
