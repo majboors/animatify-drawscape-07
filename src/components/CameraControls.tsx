@@ -57,14 +57,13 @@ export const CameraControls = ({
       
       recorder.onstop = async () => {
         const blob = new Blob(recordedChunks, { type: 'video/webm' });
-        const videoUrl = URL.createObjectURL(blob);
-        console.log('Recording saved:', videoUrl);
+        const arrayBuffer = await blob.arrayBuffer();
+        const uint8Array = new Uint8Array(arrayBuffer);
         
         if (currentRecordingId) {
-          // Save the video data to the recordings table
           const { error: updateError } = await supabase
             .from('recordings')
-            .update({ video_data: blob })
+            .update({ video_data: uint8Array })
             .eq('id', currentRecordingId);
 
           if (updateError) {

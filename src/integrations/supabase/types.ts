@@ -62,18 +62,21 @@ export type Database = {
           id: string
           name: string
           project_id: string | null
+          video_data: Uint8Array | null
         }
         Insert: {
           created_at?: string
           id?: string
           name: string
           project_id?: string | null
+          video_data?: Uint8Array | null
         }
         Update: {
           created_at?: string
           id?: string
           name?: string
           project_id?: string | null
+          video_data?: Uint8Array | null
         }
         Relationships: [
           {
@@ -110,7 +113,7 @@ export type Tables<
   TableName extends PublicTableNameOrOptions extends { schema: keyof Database }
     ? keyof (Database[PublicTableNameOrOptions["schema"]]["Tables"] &
         Database[PublicTableNameOrOptions["schema"]]["Views"])
-    : never = never,
+    : never,
 > = PublicTableNameOrOptions extends { schema: keyof Database }
   ? (Database[PublicTableNameOrOptions["schema"]]["Tables"] &
       Database[PublicTableNameOrOptions["schema"]]["Views"])[TableName] extends {

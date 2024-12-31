@@ -119,23 +119,22 @@ export const VideoSidebar = ({
       if (error) throw error;
 
       if (data?.video_data) {
-        const videoBlob = new Blob([data.video_data], { type: 'video/webm' });
-        const videoUrl = URL.createObjectURL(videoBlob);
-        // Create a video element to play the recording
+        const uint8Array = new Uint8Array(Object.values(data.video_data));
+        const blob = new Blob([uint8Array], { type: 'video/webm' });
+        const videoUrl = URL.createObjectURL(blob);
+        
         const video = document.createElement('video');
         video.src = videoUrl;
         video.controls = true;
         video.style.width = '100%';
         video.style.maxWidth = '400px';
         
-        // Create a dialog to show the video
         const dialog = document.createElement('dialog');
         dialog.style.padding = '20px';
         dialog.appendChild(video);
         document.body.appendChild(dialog);
         dialog.showModal();
         
-        // Clean up when dialog is closed
         dialog.addEventListener('close', () => {
           URL.revokeObjectURL(videoUrl);
           dialog.remove();
