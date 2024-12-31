@@ -26,6 +26,42 @@ export const Canvas = ({ activeTool, activeColor }: CanvasProps) => {
     canvas.freeDrawingBrush.width = 2;
     canvas.freeDrawingBrush.color = activeColor;
 
+    // Setup keyboard event listeners for copy/paste
+    document.addEventListener('keydown', (e) => {
+      if (!e.ctrlKey && !e.metaKey) return;
+
+      if (e.key === 'c') {
+        if (!canvas.getActiveObject()) return;
+        canvas.getActiveObject().clone((cloned: FabricObject) => {
+          canvas.clipboard = cloned;
+        });
+        toast("Object copied!");
+      }
+
+      if (e.key === 'v') {
+        if (!canvas.clipboard) return;
+        canvas.clipboard.clone((clonedObj: FabricObject) => {
+          canvas.discardActiveObject();
+          clonedObj.set({
+            left: clonedObj.left! + 10,
+            top: clonedObj.top! + 10,
+            evented: true,
+          });
+          if (clonedObj.type === 'activeSelection') {
+            clonedObj.canvas = canvas;
+            clonedObj.forEachObject((obj: FabricObject) => {
+              canvas.add(obj);
+            });
+          } else {
+            canvas.add(clonedObj);
+          }
+          canvas.setActiveObject(clonedObj);
+          canvas.requestRenderAll();
+        });
+        toast("Object pasted!");
+      }
+    });
+
     setFabricCanvas(canvas);
 
     const handleResize = () => {
@@ -50,6 +86,17 @@ export const Canvas = ({ activeTool, activeColor }: CanvasProps) => {
     
     if (activeTool === "draw" && fabricCanvas.freeDrawingBrush) {
       fabricCanvas.freeDrawingBrush.color = activeColor;
+    }
+
+    // Update active object color when color changes
+    const activeObject = fabricCanvas.getActiveObject();
+    if (activeObject && activeTool === "select") {
+      if (activeObject.type === 'line') {
+        activeObject.set('stroke', activeColor);
+      } else {
+        activeObject.set('fill', activeColor);
+      }
+      fabricCanvas.requestRenderAll();
     }
 
     const createStar = (x: number, y: number): FabricObject => {
@@ -133,6 +180,19 @@ export const Canvas = ({ activeTool, activeColor }: CanvasProps) => {
     };
 
     fabricCanvas.on("mouse:down", handleToolAction);
+
+    // Add object:modified event listener to update color when object is selected
+    fabricCanvas.on('selection:created', (e) => {
+      if (activeTool === "select" && e.selected) {
+        const selectedObject = e.selected[0];
+        if (selectedObject.type === 'line') {
+          selectedObject.set('stroke', activeColor);
+        } else {
+          selectedObject.set('fill', activeColor);
+        }
+        fabricCanvas.requestRenderAll();
+      }
+    });
 
     return () => {
       fabricCanvas.off("mouse:down", handleToolAction);
