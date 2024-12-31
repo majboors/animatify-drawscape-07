@@ -11,6 +11,27 @@ import {
   SheetTitle,
 } from "./ui/sheet";
 
+interface Project {
+  id: string;
+  name: string;
+  created_at: string;
+}
+
+interface Recording {
+  id: string;
+  name: string;
+  created_at: string;
+  project_id: string;
+  video_data: string | null;
+}
+
+interface BoardState {
+  id: string;
+  recording_id: string;
+  board_data: any;
+  created_at: string;
+}
+
 interface VideoSidebarProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
@@ -24,17 +45,16 @@ export const VideoSidebar = ({
   currentRecordingId,
   setCurrentRecordingId,
 }: VideoSidebarProps) => {
-  const [projects, setProjects] = useState<any[]>([]);
-  const [selectedProject, setSelectedProject] = useState<any>(null);
-  const [recordings, setRecordings] = useState<any[]>([]);
-  const [boardStates, setBoardStates] = useState<any[]>([]);
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [selectedProject, setSelectedProject] = useState<Project | null>(null);
+  const [recordings, setRecordings] = useState<Recording[]>([]);
+  const [boardStates, setBoardStates] = useState<BoardState[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [videoUrl, setVideoUrl] = useState<string | null>(null);
 
   useEffect(() => {
-    if (isOpen) {
-      loadProjects();
-    }
-  }, [isOpen]);
+    loadProjects();
+  }, []);
 
   useEffect(() => {
     if (selectedProject) {
@@ -57,7 +77,8 @@ export const VideoSidebar = ({
         setProjects(data);
         setSelectedProject(data[0]); // Auto-select first project
       } else {
-        toast.info("No projects found. Create a new project to start recording.");
+        setProjects([]);
+        setSelectedProject(null);
       }
     } catch (error) {
       console.error('Error loading projects:', error);
@@ -87,7 +108,6 @@ export const VideoSidebar = ({
       } else {
         setRecordings([]);
         setBoardStates([]);
-        toast.info("No recordings found for this project. Start recording to create one.");
       }
     } catch (error) {
       console.error('Error loading recordings:', error);
@@ -106,7 +126,8 @@ export const VideoSidebar = ({
         .eq('id', recordingId);
 
       if (error) throw error;
-      
+
+      // Refresh recordings list
       if (selectedProject) {
         await loadRecordings(selectedProject.id);
       }
@@ -148,33 +169,9 @@ export const VideoSidebar = ({
       if (error) throw error;
 
       if (data?.video_data) {
-        // Convert base64 to blob
-        const binaryString = atob(data.video_data);
-        const bytes = new Uint8Array(binaryString.length);
-        for (let i = 0; i < binaryString.length; i++) {
-          bytes[i] = binaryString.charCodeAt(i);
-        }
-        const blob = new Blob([bytes], { type: 'video/webm' });
-        const videoUrl = URL.createObjectURL(blob);
-        
-        const video = document.createElement('video');
-        video.src = videoUrl;
-        video.controls = true;
-        video.style.width = '100%';
-        video.style.maxWidth = '400px';
-        
-        const dialog = document.createElement('dialog');
-        dialog.style.padding = '20px';
-        dialog.appendChild(video);
-        document.body.appendChild(dialog);
-        dialog.showModal();
-        
-        dialog.addEventListener('close', () => {
-          URL.revokeObjectURL(videoUrl);
-          dialog.remove();
-        });
-      } else {
-        toast.error("No video data found for this recording");
+        const blob = new Blob([data.video_data], { type: 'video/webm' });
+        const url = URL.createObjectURL(blob);
+        setVideoUrl(url);
       }
     } catch (error) {
       console.error('Error playing recording:', error);
@@ -195,101 +192,69 @@ export const VideoSidebar = ({
         </SheetHeader>
         
         <div className="mt-4 space-y-4">
-          {isLoading ? (
-            <div className="flex items-center justify-center p-4">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900" />
+          {/* Projects List */}
+          <div className="space-y-2">
+            <h3 className="font-medium">Projects</h3>
+            <div className="space-y-1">
+              {projects.map((project) => (
+                <Button
+                  key={project.id}
+                  variant={selectedProject?.id === project.id ? "secondary" : "ghost"}
+                  className="w-full justify-start"
+                  onClick={() => setSelectedProject(project)}
+                >
+                  {project.name}
+                </Button>
+              ))}
             </div>
-          ) : (
-            <>
-              <div className="grid grid-cols-2 gap-4">
-                {projects.map((project) => (
-                  <Button
-                    key={project.id}
-                    variant={selectedProject?.id === project.id ? "default" : "outline"}
-                    className="justify-start"
-                    onClick={() => setSelectedProject(project)}
+          </div>
+
+          {/* Recordings List */}
+          {selectedProject && (
+            <div className="space-y-2">
+              <h3 className="font-medium">Recordings</h3>
+              <div className="space-y-1">
+                {recordings.map((recording) => (
+                  <div
+                    key={recording.id}
+                    className="flex items-center justify-between p-2 rounded-lg hover:bg-gray-100"
                   >
-                    {project.name}
-                  </Button>
+                    <span className="flex items-center gap-2">
+                      <Video className="h-4 w-4" />
+                      {recording.name}
+                    </span>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => playRecording(recording.id)}
+                      >
+                        <Play className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => deleteRecording(recording.id)}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
                 ))}
               </div>
+            </div>
+          )}
 
-              {selectedProject && (
-                <div className="space-y-2">
-                  <h3 className="font-semibold">Recordings in {selectedProject.name}</h3>
-                  <div className="space-y-2">
-                    {recordings.length > 0 ? (
-                      recordings.map((recording) => (
-                        <div
-                          key={recording.id}
-                          className="flex items-center justify-between p-2 bg-gray-100 rounded-md"
-                        >
-                          <span>{recording.name || `Recording ${recording.id.slice(0, 8)}`}</span>
-                          <div className="flex items-center space-x-2">
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => playRecording(recording.id)}
-                            >
-                              <Play className="h-4 w-4 mr-1" />
-                              Play Video
-                            </Button>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => loadBoardStatesForRecording(recording.id)}
-                            >
-                              <Video className="h-4 w-4 mr-1" />
-                              View Boards
-                            </Button>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => deleteRecording(recording.id)}
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        </div>
-                      ))
-                    ) : (
-                      <div className="text-center text-gray-500 py-4">
-                        No recordings found for this project. Start recording to create one.
-                      </div>
-                    )}
-                  </div>
-                </div>
-              )}
-
-              {currentRecordingId && boardStates.length > 0 && (
-                <div className="mt-4">
-                  <h3 className="font-semibold mb-2">Saved Boards</h3>
-                  <div className="space-y-2">
-                    {boardStates.map((state, index) => (
-                      <div
-                        key={state.id}
-                        className="flex items-center justify-between p-2 bg-gray-100 rounded-md"
-                      >
-                        <span>Board {index + 1}</span>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => {
-                            window.dispatchEvent(
-                              new CustomEvent('loadBoardState', {
-                                detail: state.board_data
-                              })
-                            );
-                          }}
-                        >
-                          Load
-                        </Button>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </>
+          {/* Video Player */}
+          {videoUrl && (
+            <div className="mt-4">
+              <video
+                src={videoUrl}
+                controls
+                className="w-full rounded-lg"
+                onEnded={() => setVideoUrl(null)}
+              />
+            </div>
           )}
         </div>
       </SheetContent>

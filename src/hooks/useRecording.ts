@@ -29,13 +29,18 @@ export const useRecording = ({
       
       // Get screen capture stream
       const screenStream = await navigator.mediaDevices.getDisplayMedia({ 
-        video: true,
+        video: { 
+          displaySurface: "browser",
+        },
         audio: true 
       });
 
       // Get microphone stream
       const micStream = await navigator.mediaDevices.getUserMedia({ 
-        audio: true 
+        audio: {
+          echoCancellation: true,
+          noiseSuppression: true,
+        }
       });
 
       // Combine the streams
@@ -122,6 +127,8 @@ export const useRecording = ({
     } catch (error) {
       console.error('Error starting recording:', error);
       toast.error("Failed to start recording. Please make sure you have granted screen and microphone permissions.");
+      setPreviewStream(null);
+      setIsRecording(false);
     }
   }, [currentProjectId, recordedChunks, setIsRecording, setIsPaused]);
 
