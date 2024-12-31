@@ -1,4 +1,4 @@
-import { Square, Circle, Pencil, MousePointer, Triangle as TriangleIcon, Star, Minus, Copy, Clipboard, PaintBucket, Type } from "lucide-react";
+import { Square, Circle, Pencil, MousePointer, Triangle as TriangleIcon, Star, Minus, Copy, Clipboard, PaintBucket, Type, Group as GroupIcon, Ungroup } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import {
@@ -19,6 +19,8 @@ interface ToolbarProps {
   onFontChange?: (font: string) => void;
   onCopy?: () => void;
   onPaste?: () => void;
+  onGroup?: () => void;
+  onUngroup?: () => void;
 }
 
 export const Toolbar = ({ 
@@ -29,7 +31,9 @@ export const Toolbar = ({
   onColorChange,
   onFontChange,
   onCopy,
-  onPaste 
+  onPaste,
+  onGroup,
+  onUngroup
 }: ToolbarProps) => {
   const tools = [
     { id: "select", icon: MousePointer, label: "Select" },
@@ -57,6 +61,22 @@ export const Toolbar = ({
       label: "Paste", 
       onClick: () => {
         onPaste?.();
+      }
+    },
+    { 
+      id: "group", 
+      icon: GroupIcon, 
+      label: "Group (Ctrl+G)", 
+      onClick: () => {
+        onGroup?.();
+      }
+    },
+    { 
+      id: "ungroup", 
+      icon: Ungroup, 
+      label: "Ungroup (Ctrl+Shift+G)", 
+      onClick: () => {
+        onUngroup?.();
       }
     },
     { 

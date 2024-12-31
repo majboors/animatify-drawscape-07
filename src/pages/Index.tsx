@@ -25,6 +25,8 @@ const Index = () => {
         onFontChange={setActiveFont}
         onCopy={() => canvasRef.current?.copy()}
         onPaste={() => canvasRef.current?.paste()}
+        onGroup={() => canvasRef.current?.group()}
+        onUngroup={() => canvasRef.current?.ungroup()}
       />
     </div>
   );

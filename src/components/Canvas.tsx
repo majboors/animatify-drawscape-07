@@ -13,6 +13,8 @@ interface CanvasProps {
 export interface CanvasRef {
   copy: () => void;
   paste: () => void;
+  group: () => void;
+  ungroup: () => void;
 }
 
 export const Canvas = forwardRef<CanvasRef, CanvasProps>(({ activeTool, activeColor, activeFont }, ref) => {
@@ -62,6 +64,36 @@ export const Canvas = forwardRef<CanvasRef, CanvasProps>(({ activeTool, activeCo
         console.error('Error pasting object:', error);
         toast.error("Failed to paste object");
       }
+    },
+    group: () => {
+      if (!fabricCanvas) return;
+      
+      const activeSelection = fabricCanvas.getActiveObject();
+      if (!activeSelection || !activeSelection.type.includes('Selection')) {
+        toast.error("Select multiple objects first!");
+        return;
+      }
+
+      if (activeSelection.type === 'activeSelection') {
+        // @ts-ignore - fabric.js types are not complete
+        activeSelection.toGroup();
+        fabricCanvas.requestRenderAll();
+        toast.success("Objects grouped!");
+      }
+    },
+    ungroup: () => {
+      if (!fabricCanvas) return;
+      
+      const activeObject = fabricCanvas.getActiveObject();
+      if (!activeObject || activeObject.type !== 'group') {
+        toast.error("Select a group first!");
+        return;
+      }
+
+      // @ts-ignore - fabric.js types are not complete
+      activeObject.toActiveSelection();
+      fabricCanvas.requestRenderAll();
+      toast.success("Group ungrouped!");
     }
   }));
 
@@ -197,6 +229,26 @@ export const Canvas = forwardRef<CanvasRef, CanvasProps>(({ activeTool, activeCo
     };
 
   }, [activeTool, activeColor, activeFont, fabricCanvas]);
+
+  useEffect(() => {
+    if (!fabricCanvas) return;
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'g') {
+        e.preventDefault();
+        if (e.shiftKey) {
+          // Ungroup (Ctrl/Cmd + Shift + G)
+          ref.current?.ungroup();
+        } else {
+          // Group (Ctrl/Cmd + G)
+          ref.current?.group();
+        }
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [fabricCanvas, ref]);
 
   return (
     <div className="w-full h-[calc(100vh-64px)] bg-gray-50 overflow-hidden">
