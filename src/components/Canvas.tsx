@@ -43,7 +43,7 @@ export const Canvas = forwardRef<CanvasRef, CanvasProps>(({ activeTool, activeCo
       try {
         // Create new object from clipboard data
         util.enlivenObjects([clipboard], {
-          onComplete: (objects: FabricObject[]) => {
+          callback: (objects: FabricObject[]) => {
             const pastedObj = objects[0];
             if (pastedObj) {
               pastedObj.set({
