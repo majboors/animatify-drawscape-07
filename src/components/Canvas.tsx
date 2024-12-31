@@ -20,8 +20,9 @@ export const Canvas = ({ activeTool, activeColor }: CanvasProps) => {
       backgroundColor: "#ffffff",
     });
 
-    canvas.freeDrawingBrush.color = activeColor;
+    // Initialize drawing brush after canvas creation
     canvas.freeDrawingBrush.width = 2;
+    canvas.freeDrawingBrush.color = activeColor;
 
     setFabricCanvas(canvas);
 
@@ -49,10 +50,10 @@ export const Canvas = ({ activeTool, activeColor }: CanvasProps) => {
       fabricCanvas.freeDrawingBrush.color = activeColor;
     }
 
-    const handleToolAction = (e: MouseEvent) => {
+    const handleToolAction = (options: { e: Event; pointer: { x: number; y: number } }) => {
       if (!fabricCanvas || activeTool === "select" || activeTool === "draw") return;
 
-      const pointer = fabricCanvas.getPointer(e);
+      const pointer = options.pointer;
       
       if (activeTool === "rectangle") {
         const rect = new Rect({
