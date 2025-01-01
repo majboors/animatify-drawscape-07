@@ -1,6 +1,8 @@
 import { Button } from "./ui/button";
 import { Video, Play, Pause, Save } from "lucide-react";
 import { toast } from "sonner";
+import { ProjectDialog } from "./ProjectDialog";
+import { useState } from "react";
 
 interface RecordingControlsProps {
   isRecording: boolean;
@@ -17,8 +19,20 @@ export const RecordingControls = ({
   onPauseResume,
   onSaveBoard,
 }: RecordingControlsProps) => {
+  const [showProjectDialog, setShowProjectDialog] = useState(false);
+
   const handleRecordClick = () => {
-    console.log("[RecordingControls] Record button clicked", { isRecording });
+    if (!isRecording) {
+      setShowProjectDialog(true);
+    } else {
+      console.log("[RecordingControls] Stop recording clicked");
+      onRecordingClick();
+    }
+  };
+
+  const handleProjectCreated = (projectId: string) => {
+    setShowProjectDialog(false);
+    console.log("[RecordingControls] Project selected, starting recording");
     onRecordingClick();
   };
 
@@ -64,6 +78,12 @@ export const RecordingControls = ({
           </Button>
         </>
       )}
+
+      <ProjectDialog
+        isOpen={showProjectDialog}
+        onOpenChange={setShowProjectDialog}
+        onProjectCreated={handleProjectCreated}
+      />
     </>
   );
 };
