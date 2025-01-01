@@ -54,6 +54,9 @@ export const VideoListItem = ({ recording, onPlay, onDelete }: VideoListItemProp
             className="w-full rounded-lg border h-32 object-cover"
             preload="metadata"
             controls
+            playsInline
+            controlsList="nodownload"
+            type="video/mp4"
           />
           <div className="flex gap-2">
             <Input
