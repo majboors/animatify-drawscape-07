@@ -54,7 +54,7 @@ export const NewSidebarContent = ({ onOutputChange, isFullscreen }: NewSidebarCo
   };
 
   return (
-    <ScrollArea className={`flex-1 p-4 ${isFullscreen ? 'fixed inset-0 z-50 bg-background' : ''}`}>
+    <ScrollArea className={`flex-1 p-4 ${isFullscreen ? 'fixed inset-0 z-50 bg-background pt-16' : ''}`}>
       <div className="space-y-4">
         <div className="flex items-center justify-between gap-4">
           <div className="flex flex-1 gap-4">
@@ -82,32 +82,31 @@ export const NewSidebarContent = ({ onOutputChange, isFullscreen }: NewSidebarCo
         </div>
 
         <div className={`relative ${isFullscreen ? 'h-[80vh]' : 'h-[400px]'}`}>
-          {editorMounted ? (
-            <Editor
-              height="100%"
-              defaultLanguage="python"
-              language={language}
-              value={code}
-              onChange={(value) => setCode(value || "")}
-              theme="vs-dark"
-              options={{
-                minimap: { enabled: false },
-                fontSize: 14,
-                wordWrap: "on",
-                automaticLayout: true,
-                scrollBeyondLastLine: false,
-                lineNumbers: "on",
-                folding: true,
-                tabSize: 2,
-              }}
-              onMount={handleEditorDidMount}
-              className="rounded-md overflow-hidden border border-input"
-            />
-          ) : (
-            <div className="h-full w-full flex items-center justify-center">
-              Loading editor...
-            </div>
-          )}
+          <Editor
+            height="100%"
+            defaultLanguage="python"
+            language={language}
+            value={code}
+            onChange={(value) => setCode(value || "")}
+            theme="vs-dark"
+            options={{
+              minimap: { enabled: false },
+              fontSize: 14,
+              wordWrap: "on",
+              automaticLayout: true,
+              scrollBeyondLastLine: false,
+              lineNumbers: "on",
+              folding: true,
+              tabSize: 2,
+            }}
+            onMount={handleEditorDidMount}
+            loading={
+              <div className="h-full w-full flex items-center justify-center text-muted-foreground">
+                Loading editor...
+              </div>
+            }
+            className="rounded-md overflow-hidden border border-input"
+          />
         </div>
 
         <Button onClick={handleRun} className="w-full">
