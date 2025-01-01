@@ -17,10 +17,21 @@ interface VideoListItemProps {
 export const VideoListItem = ({ recording, onPlay, onDelete }: VideoListItemProps) => {
   const handleCopyUrl = () => {
     if (recording.video_data) {
-      navigator.clipboard.writeText(recording.video_data);
+      // Decode the video URL before copying
+      const decodedUrl = decodeVideoUrl(recording.video_data);
+      navigator.clipboard.writeText(decodedUrl);
       toast.success("URL copied to clipboard");
     }
   };
+
+  const decodeVideoUrl = (encodedUrl: string) => {
+    // Remove the blob: prefix and decode the hex string
+    const hexString = encodedUrl.replace('\\x', '');
+    const decodedString = Buffer.from(hexString, 'hex').toString('utf-8');
+    return decodedString.replace('blob:', '');
+  };
+
+  const videoUrl = recording.video_data ? decodeVideoUrl(recording.video_data) : '';
 
   return (
     <div className="space-y-4 p-4 rounded-lg hover:bg-gray-100">
@@ -56,12 +67,12 @@ export const VideoListItem = ({ recording, onPlay, onDelete }: VideoListItemProp
             playsInline
             controlsList="nodownload"
           >
-            <source src={recording.video_data} type="video/mp4" />
+            <source src={videoUrl} type="video/mp4" />
             Your browser does not support the video tag.
           </video>
           <div className="flex gap-2">
             <Input
-              value={recording.video_data}
+              value={videoUrl}
               readOnly
               className="flex-1 text-sm"
             />
