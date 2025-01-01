@@ -41,10 +41,12 @@ export const VideoUrlFetcher = ({ recordingId, onPlay, onDelete }: VideoUrlFetch
       }
 
       if (data) {
-        // Remove the hex prefix if it exists
+        // Convert hex URL to regular URL if needed
         const cleanedData = {
           ...data,
-          video_data: data.video_data.replace(/^\\x626c6f623a/, '')
+          video_data: data.video_data.startsWith('68747470') 
+            ? Buffer.from(data.video_data, 'hex').toString()
+            : data.video_data
         };
         console.log("Cleaned recording data:", cleanedData);
         setRecording(cleanedData);
