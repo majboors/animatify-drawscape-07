@@ -56,8 +56,9 @@ export const VideoListItem = ({ recording, onPlay, onDelete }: VideoListItemProp
             controls
             playsInline
             controlsList="nodownload"
-            type="video/mp4"
-          />
+          >
+            <source src={recording.video_data} type="video/mp4" />
+          </video>
           <div className="flex gap-2">
             <Input
               value={recording.video_data}
