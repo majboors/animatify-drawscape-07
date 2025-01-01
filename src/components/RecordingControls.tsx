@@ -1,11 +1,9 @@
-import { Button } from "./ui/button";
-import { Video, Play, Pause, Save, Square, X } from "lucide-react";
+import { useState, useRef } from "react";
 import { toast } from "sonner";
 import { ProjectDialog } from "./ProjectDialog";
-import { useState, useRef } from "react";
 import { ScreenRecorder } from "./ScreenRecorder";
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "./ui/alert-dialog";
 import { RecordingPreviewDialog } from "./RecordingPreviewDialog";
+import { InlineRecordingControls } from "./InlineRecordingControls";
 
 interface RecordingControlsProps {
   isRecording: boolean;
@@ -78,62 +76,14 @@ export const RecordingControls = ({
 
   return (
     <>
-      <div className="flex items-center gap-2">
-        <Button
-          variant={isRecording ? "destructive" : "outline"}
-          size="icon"
-          onClick={isRecording ? handleStopRecording : handleRecordClick}
-          className={isRecording ? "bg-red-500 text-white hover:bg-red-600" : ""}
-        >
-          {isRecording ? <Square className="h-4 w-4" /> : <Video className="h-4 w-4" />}
-        </Button>
-
-        {isRecording && (
-          <div className="flex items-center gap-2 animate-fade-in bg-white/90 backdrop-blur-sm px-3 py-2 rounded-lg shadow-sm">
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={handlePauseResumeClick}
-            >
-              {isPaused ? (
-                <Play className="h-4 w-4" />
-              ) : (
-                <Pause className="h-4 w-4" />
-              )}
-            </Button>
-
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={handleSaveClick}
-            >
-              <Save className="h-4 w-4" />
-            </Button>
-
-            <AlertDialog>
-              <AlertDialogTrigger asChild>
-                <Button variant="outline" size="icon">
-                  <X className="h-4 w-4" />
-                </Button>
-              </AlertDialogTrigger>
-              <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>Stop Recording?</AlertDialogTitle>
-                  <AlertDialogDescription>
-                    Are you sure you want to stop the recording? This action cannot be undone.
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel>Cancel</AlertDialogCancel>
-                  <AlertDialogAction onClick={handleStopRecording}>
-                    Stop Recording
-                  </AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
-          </div>
-        )}
-      </div>
+      <InlineRecordingControls
+        isRecording={isRecording}
+        isPaused={isPaused}
+        onRecordingClick={handleRecordClick}
+        onPauseResume={handlePauseResumeClick}
+        onSaveBoard={handleSaveClick}
+        onStopRecording={handleStopRecording}
+      />
 
       <ProjectDialog
         isOpen={showProjectDialog}
