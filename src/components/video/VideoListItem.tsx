@@ -15,9 +15,14 @@ interface VideoListItemProps {
 }
 
 export const VideoListItem = ({ recording, onPlay, onDelete }: VideoListItemProps) => {
+  // Convert hex URL to regular URL if needed
+  const videoUrl = recording.video_data?.startsWith('\\x') 
+    ? Buffer.from(recording.video_data.slice(2), 'hex').toString()
+    : recording.video_data;
+
   const handleCopyUrl = () => {
-    if (recording.video_data) {
-      navigator.clipboard.writeText(recording.video_data);
+    if (videoUrl) {
+      navigator.clipboard.writeText(videoUrl);
       toast.success("URL copied to clipboard");
     }
   };
@@ -47,17 +52,17 @@ export const VideoListItem = ({ recording, onPlay, onDelete }: VideoListItemProp
         </div>
       </div>
 
-      {recording.video_data && (
+      {videoUrl && (
         <>
           <video
-            src={recording.video_data}
+            src={videoUrl}
             className="w-full rounded-lg border h-32 object-cover"
             preload="metadata"
             controls
           />
           <div className="flex gap-2">
             <Input
-              value={recording.video_data}
+              value={videoUrl}
               readOnly
               className="flex-1 text-sm"
             />
