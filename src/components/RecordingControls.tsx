@@ -89,11 +89,12 @@ export const RecordingControls = ({
         </Button>
 
         {isRecording && (
-          <>
+          <div className="flex items-center gap-2 animate-fade-in">
             <Button
               variant="outline"
               size="icon"
               onClick={handlePauseResumeClick}
+              className="bg-white/90"
             >
               {isPaused ? (
                 <Play className="h-4 w-4" />
@@ -106,13 +107,14 @@ export const RecordingControls = ({
               variant="outline"
               size="icon"
               onClick={handleSaveClick}
+              className="bg-white/90"
             >
               <Save className="h-4 w-4" />
             </Button>
 
             <AlertDialog>
               <AlertDialogTrigger asChild>
-                <Button variant="outline" size="icon">
+                <Button variant="outline" size="icon" className="bg-white/90">
                   <X className="h-4 w-4" />
                 </Button>
               </AlertDialogTrigger>
@@ -131,7 +133,7 @@ export const RecordingControls = ({
                 </AlertDialogFooter>
               </AlertDialogContent>
             </AlertDialog>
-          </>
+          </div>
         )}
       </div>
 
