@@ -15,7 +15,27 @@ interface VideoListItemProps {
 }
 
 export const VideoListItem = ({ recording, onPlay, onDelete }: VideoListItemProps) => {
-  const videoUrl = recording.video_data || null;
+  const decodeHexString = (hexString: string): string => {
+    try {
+      // Check if it's a hex string starting with \x
+      if (hexString.startsWith('\\x')) {
+        // Remove \x prefix and convert to regular string
+        const hex = hexString.slice(2);
+        let str = '';
+        for (let i = 0; i < hex.length; i += 2) {
+          str += String.fromCharCode(parseInt(hex.substr(i, 2), 16));
+        }
+        return str;
+      }
+      // If it's not a hex string, return as is
+      return hexString;
+    } catch (error) {
+      console.error('Error decoding hex string:', error);
+      return hexString;
+    }
+  };
+
+  const videoUrl = recording.video_data ? decodeHexString(recording.video_data) : null;
 
   const handleCopyUrl = () => {
     if (videoUrl) {

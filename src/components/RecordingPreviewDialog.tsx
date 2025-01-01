@@ -48,12 +48,15 @@ export const RecordingPreviewDialog = ({
     try {
       console.log("Saving video URL:", videoUrl);
       
+      // Remove the 'blob:' prefix if it exists
+      const cleanVideoUrl = videoUrl.replace('blob:', '');
+      
       const { data, error } = await supabase
         .from('recordings')
         .insert({
           project_id: projectId,
           name: `Recording ${new Date().toLocaleString()}`,
-          video_data: videoUrl // Store the raw URL directly
+          video_data: cleanVideoUrl
         })
         .select()
         .single();
