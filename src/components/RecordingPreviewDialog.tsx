@@ -51,7 +51,7 @@ export const RecordingPreviewDialog = ({
       // Convert blob to MP4 format
       const mp4Blob = new Blob([videoBlob], { type: 'video/mp4' });
       
-      // Create a unique file path
+      // Create a unique file path with .mp4 extension
       const timestamp = Date.now();
       const uuid = crypto.randomUUID();
       const filePath = `${projectId}/${timestamp}-${uuid}.mp4`;
@@ -70,21 +70,21 @@ export const RecordingPreviewDialog = ({
 
       if (storageError) throw storageError;
 
-      // Get public URL
+      // Get public URL from Supabase storage
       const { data: { publicUrl } } = supabase
         .storage
         .from('videos')
         .getPublicUrl(filePath);
 
-      console.log("Video uploaded, public URL:", publicUrl);
+      console.log("Video uploaded successfully, public URL:", publicUrl);
 
-      // Save recording metadata to database
+      // Save recording metadata with the Supabase storage URL
       const { data, error } = await supabase
         .from('recordings')
         .insert({
           project_id: projectId,
           name: `Recording ${new Date().toLocaleString()}`,
-          video_data: publicUrl // Store the actual URL instead of blob data
+          video_data: publicUrl
         })
         .select()
         .single();

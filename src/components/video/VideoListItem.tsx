@@ -8,14 +8,14 @@ interface VideoListItemProps {
     id: string;
     name: string;
     created_at: string;
-    video_data?: string;
+    video_data: string;
   };
   onPlay: (id: string) => void;
   onDelete: (id: string) => void;
 }
 
 export const VideoListItem = ({ recording, onPlay, onDelete }: VideoListItemProps) => {
-  const videoUrl = recording.video_data || null;
+  const videoUrl = recording.video_data;
 
   const handleCopyUrl = () => {
     if (videoUrl) {
