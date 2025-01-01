@@ -17,34 +17,31 @@ interface VideoListItemProps {
 export const VideoListItem = ({ recording, onPlay, onDelete }: VideoListItemProps) => {
   const handleCopyUrl = () => {
     if (recording.video_data) {
-      const decodedUrl = decodeVideoUrl(recording.video_data);
-      navigator.clipboard.writeText(decodedUrl);
+      navigator.clipboard.writeText(recording.video_data);
       toast.success("URL copied to clipboard");
     }
   };
 
-  const decodeVideoUrl = (encodedUrl: string) => {
+  const decodeVideoUrl = (url: string) => {
     try {
-      // Remove any blob: prefix if present
-      const cleanUrl = encodedUrl.replace('blob:', '');
-      // If the URL is already in a valid format, return it
-      if (cleanUrl.startsWith('http') || cleanUrl.startsWith('data:')) {
-        return cleanUrl;
+      // If it's a valid URL, return as is
+      if (url.startsWith('http') || url.startsWith('data:')) {
+        return url;
       }
-      // If it's base64 encoded, decode it
-      if (cleanUrl.startsWith('data:video/mp4;base64,')) {
-        return cleanUrl;
-      }
-      // For hex-encoded strings, decode them
-      const decoded = decodeURIComponent(cleanUrl);
-      return decoded;
+      
+      // Remove any blob: prefix
+      url = url.replace('blob:', '');
+      
+      // Remove any \x prefix from hex values
+      url = url.replace(/\\x/g, '%');
+      
+      // Decode the URL
+      return decodeURIComponent(url);
     } catch (error) {
       console.error('Error decoding URL:', error);
-      return encodedUrl; // Return original URL if decoding fails
+      return url;
     }
   };
-
-  const videoUrl = recording.video_data ? decodeVideoUrl(recording.video_data) : '';
 
   return (
     <div className="space-y-4 p-4 rounded-lg hover:bg-gray-100">
@@ -74,18 +71,14 @@ export const VideoListItem = ({ recording, onPlay, onDelete }: VideoListItemProp
       {recording.video_data && (
         <>
           <video
+            src={decodeVideoUrl(recording.video_data)}
             className="w-full rounded-lg border h-32 object-cover"
             preload="metadata"
             controls
-            playsInline
-            controlsList="nodownload"
-          >
-            <source src={videoUrl} type="video/mp4" />
-            Your browser does not support the video tag.
-          </video>
+          />
           <div className="flex gap-2">
             <Input
-              value={videoUrl}
+              value={recording.video_data}
               readOnly
               className="flex-1 text-sm"
             />
