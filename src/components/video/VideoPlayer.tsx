@@ -23,22 +23,21 @@ export const VideoPlayer = ({ recordingId, onPlay, onDelete }: VideoPlayerProps)
     fetchRecording();
   }, [recordingId]);
 
-  const decodeHexUrl = (hexUrl: string | null): string => {
-    if (!hexUrl) return '';
-    
-    // Check if the URL is hex-encoded (starts with blob: or \x)
-    if (hexUrl.startsWith('blob:') || hexUrl.startsWith('\\x')) {
-      try {
-        // Remove the hex prefix and decode
-        const cleanUrl = hexUrl.replace(/^(blob:|\\x)/, '');
-        return decodeURIComponent(cleanUrl);
-      } catch (error) {
-        console.error("Error decoding URL:", error);
-        return hexUrl; // Return original if decoding fails
+  const hexToString = (hex: string): string => {
+    try {
+      // Remove 'blob:' prefix if present
+      hex = hex.replace(/^blob:/, '');
+      
+      // Convert hex to string
+      let str = '';
+      for (let i = 0; i < hex.length; i += 2) {
+        str += String.fromCharCode(parseInt(hex.substr(i, 2), 16));
       }
+      return str;
+    } catch (error) {
+      console.error("Error converting hex to string:", error);
+      return hex;
     }
-    
-    return hexUrl; // Return as-is if not hex-encoded
   };
 
   const fetchRecording = async () => {
@@ -59,13 +58,21 @@ export const VideoPlayer = ({ recordingId, onPlay, onDelete }: VideoPlayerProps)
       }
 
       if (data) {
+        let videoUrl = data.video_data;
+        
+        // Check if the URL is hex-encoded
+        if (videoUrl && /^[0-9a-fA-F]+$/.test(videoUrl)) {
+          console.log("Converting hex URL to string");
+          videoUrl = hexToString(videoUrl);
+        }
+
         const cleanedData = {
           ...data,
-          video_data: decodeHexUrl(data.video_data)
+          video_data: videoUrl
         };
         
-        setRecording(cleanedData);
         console.log("Recording loaded:", cleanedData);
+        setRecording(cleanedData);
       }
     } catch (error) {
       console.error("Error in fetchRecording:", error);
