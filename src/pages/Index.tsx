@@ -1,7 +1,8 @@
-import { useState, useRef } from "react";
+import { useState } from "react";
 import { Toolbar } from "@/components/Toolbar";
 import { Canvas, CanvasRef } from "@/components/Canvas";
 import { ProjectSidebar } from "@/components/ProjectSidebar";
+import { VideoSidebar } from "@/components/VideoSidebar";
 import { CameraControls } from "@/components/CameraControls";
 import { UserCamera } from "@/components/UserCamera";
 import { saveBoardState } from "@/utils/boardState";
@@ -12,14 +13,8 @@ const Index = () => {
   const [activeFont, setActiveFont] = useState("Arial");
   const [isRecording, setIsRecording] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [isVideoSidebarOpen, setIsVideoSidebarOpen] = useState(false);
   const [currentRecordingId, setCurrentRecordingId] = useState<string | null>(null);
-  const canvasRef = useRef<CanvasRef>(null);
-
-  const handleSaveBoard = async () => {
-    if (!canvasRef.current || !currentRecordingId) return;
-    await saveBoardState(canvasRef.current, currentRecordingId);
-  };
 
   return (
     <div className="h-screen flex flex-col">
@@ -31,22 +26,26 @@ const Index = () => {
         onToolChange={setActiveTool}
         onColorChange={setActiveColor}
         onFontChange={setActiveFont}
-        onCopy={() => canvasRef.current?.copy()}
-        onPaste={() => canvasRef.current?.paste()}
-        onGroup={() => canvasRef.current?.group()}
-        onUngroup={() => canvasRef.current?.ungroup()}
-        onSaveBoard={handleSaveBoard}
       />
       <Canvas
-        ref={canvasRef}
         activeTool={activeTool}
         activeColor={activeColor}
         activeFont={activeFont}
       />
       <ProjectSidebar />
+      <VideoSidebar
+        isOpen={isVideoSidebarOpen}
+        onOpenChange={setIsVideoSidebarOpen}
+        currentRecordingId={currentRecordingId}
+        setCurrentRecordingId={setCurrentRecordingId}
+      />
       <CameraControls
-        onToggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)}
-        onSaveBoard={handleSaveBoard}
+        onToggleSidebar={() => setIsVideoSidebarOpen(!isVideoSidebarOpen)}
+        onSaveBoard={async () => {
+          if (currentRecordingId) {
+            await saveBoardState(currentRecordingId);
+          }
+        }}
         isRecording={isRecording}
         setIsRecording={setIsRecording}
         isPaused={isPaused}
