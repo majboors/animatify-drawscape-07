@@ -22,7 +22,7 @@ export const ScreenRecorder = () => {
     try {
       console.log("Starting recording setup...");
       
-      // Get microphone audio stream
+      // Get microphone audio stream first
       const micStream = await navigator.mediaDevices.getUserMedia({ 
         audio: {
           echoCancellation: true,
@@ -38,19 +38,39 @@ export const ScreenRecorder = () => {
           width: { ideal: 1920 },
           height: { ideal: 1080 }
         },
-        audio: true
+        audio: {
+          echoCancellation: true,
+          noiseSuppression: true,
+          autoGainControl: true
+        }
       });
       console.log("Screen capture stream acquired");
 
-      // Combine all audio tracks and video track
-      const videoTrack = displayStream.getVideoTracks()[0];
-      const audioTracks = [
-        ...displayStream.getAudioTracks(),  // System audio
-        ...micStream.getAudioTracks()       // Microphone audio
-      ];
+      // Create a new AudioContext
+      const audioContext = new AudioContext();
       
-      const combinedStream = new MediaStream([videoTrack, ...audioTracks]);
-      console.log(`Combined stream created with ${audioTracks.length} audio tracks`);
+      // Create audio sources for both streams
+      const micSource = audioContext.createMediaStreamSource(micStream);
+      const systemSource = audioContext.createMediaStreamSource(new MediaStream([...displayStream.getAudioTracks()]));
+      
+      // Create a mixer
+      const destination = audioContext.createMediaStreamDestination();
+      
+      // Connect both sources to the destination
+      micSource.connect(destination);
+      systemSource.connect(destination);
+      
+      // Get the mixed audio stream
+      const mixedAudioStream = destination.stream;
+      
+      // Combine video track with mixed audio
+      const videoTrack = displayStream.getVideoTracks()[0];
+      const combinedStream = new MediaStream([
+        videoTrack,
+        ...mixedAudioStream.getTracks()
+      ]);
+      
+      console.log("Combined stream created with mixed audio");
       
       const mediaRecorder = new MediaRecorder(combinedStream, {
         mimeType: 'video/webm;codecs=vp8,opus'
@@ -72,10 +92,14 @@ export const ScreenRecorder = () => {
         await uploadToSupabase(blob);
         
         // Cleanup streams
-        [videoTrack, ...audioTracks].forEach(track => {
+        [videoTrack, ...mixedAudioStream.getTracks()].forEach(track => {
           track.stop();
           console.log(`Stopped track: ${track.kind}`);
         });
+        
+        // Close audio context
+        await audioContext.close();
+        console.log("Audio context closed");
       };
 
       mediaRecorder.start(1000); // Collect data every second
