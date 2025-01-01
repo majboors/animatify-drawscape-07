@@ -15,26 +15,7 @@ interface VideoListItemProps {
 }
 
 export const VideoListItem = ({ recording, onPlay, onDelete }: VideoListItemProps) => {
-  const getDecodedUrl = (url: string) => {
-    try {
-      if (!url) return null;
-      
-      // Handle hex-encoded URLs
-      if (url.startsWith('\\x')) {
-        // Remove \x prefix and decode hex
-        const hexString = url.slice(2);
-        const decoded = Buffer.from(hexString, 'hex').toString();
-        console.log('Decoded URL:', decoded);
-        return decoded;
-      }
-      return url;
-    } catch (error) {
-      console.error('Error decoding URL:', error);
-      return null;
-    }
-  };
-
-  const videoUrl = recording.video_data ? getDecodedUrl(recording.video_data) : null;
+  const videoUrl = recording.video_data || null;
 
   const handleCopyUrl = () => {
     if (videoUrl) {
