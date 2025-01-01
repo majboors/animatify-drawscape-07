@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef } from "react";
 import { startScreenRecording, saveRecordingToDatabase } from "@/utils/recordingUtils";
 import { toast } from "sonner";
 
@@ -19,92 +19,78 @@ export const useRecording = ({
 }: UseRecordingProps) => {
   const [currentProjectId, setCurrentProjectId] = useState<string | null>(null);
   const [showProjectDialog, setShowProjectDialog] = useState(false);
-  const [mediaRecorder, setMediaRecorder] = useState<MediaRecorder | null>(null);
-  const [recordedChunks, setRecordedChunks] = useState<Blob[]>([]);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const chunksRef = useRef<Blob[]>([]);
   const [previewStream, setPreviewStream] = useState<MediaStream | null>(null);
 
   const startRecording = useCallback(async () => {
     try {
-      console.log("[useRecording] Initializing recording process...");
+      console.log("[useRecording] Starting recording process...");
       const stream = await startScreenRecording();
       if (!stream) {
-        console.error("[useRecording] Failed to get media stream");
         throw new Error("Failed to get media stream");
       }
-      console.log("[useRecording] Media stream obtained successfully:", stream.id);
+      console.log("[useRecording] Got media stream:", stream.id);
 
       setPreviewStream(stream);
-      console.log("[useRecording] Creating MediaRecorder instance...");
       const recorder = new MediaRecorder(stream, {
         mimeType: 'video/webm;codecs=vp9'
       });
       
       recorder.ondataavailable = (event) => {
         if (event.data.size > 0) {
-          console.log(`[useRecording] Received data chunk of size: ${event.data.size} bytes`);
-          setRecordedChunks(prev => {
-            console.log(`[useRecording] Adding chunk. Total chunks: ${prev.length + 1}`);
-            return [...prev, event.data];
-          });
+          console.log(`[useRecording] Received data chunk: ${event.data.size} bytes`);
+          chunksRef.current.push(event.data);
         }
       };
 
       recorder.onstart = () => {
-        console.log("[useRecording] MediaRecorder started recording");
+        console.log("[useRecording] Recording started");
         setIsRecording(true);
+        chunksRef.current = [];
         toast.success("Recording started");
       };
 
-      recorder.onstop = () => {
-        console.log("[useRecording] MediaRecorder stopped recording");
+      recorder.onstop = async () => {
+        console.log("[useRecording] Recording stopped");
         setIsRecording(false);
-        if (recordedChunks.length > 0) {
-          console.log(`[useRecording] Processing ${recordedChunks.length} recorded chunks`);
-          handleSaveRecording();
+        if (chunksRef.current.length > 0) {
+          await handleSaveRecording();
         }
       };
 
       recorder.onpause = () => {
-        console.log("[useRecording] MediaRecorder paused");
+        console.log("[useRecording] Recording paused");
         setIsPaused(true);
         toast.info("Recording paused");
       };
       
       recorder.onresume = () => {
-        console.log("[useRecording] MediaRecorder resumed");
+        console.log("[useRecording] Recording resumed");
         setIsPaused(false);
         toast.info("Recording resumed");
       };
 
-      setMediaRecorder(recorder);
-      console.log("[useRecording] Starting MediaRecorder with 1-second intervals");
-      recorder.start(1000);
+      mediaRecorderRef.current = recorder;
+      recorder.start(1000); // Collect data every second
     } catch (error) {
-      console.error('[useRecording] Error in startRecording:', error);
-      toast.error("Failed to start recording. Please try again.");
+      console.error('[useRecording] Error starting recording:', error);
+      toast.error("Failed to start recording");
       throw error;
     }
-  }, [setIsRecording, setIsPaused, recordedChunks]);
+  }, [setIsRecording, setIsPaused]);
 
   const handleSaveRecording = async () => {
-    console.log("[useRecording] Starting save recording process...");
-    
     if (!currentProjectId) {
-      console.error("[useRecording] Save failed: No project ID available");
+      console.error("[useRecording] No project ID available");
       toast.error("No project selected");
-      return;
-    }
-    
-    if (recordedChunks.length === 0) {
-      console.error("[useRecording] Save failed: No recording chunks available");
-      toast.error("No recording data available");
       return;
     }
 
     try {
-      console.log(`[useRecording] Creating blob from ${recordedChunks.length} chunks...`);
-      const blob = new Blob(recordedChunks, { type: "video/webm" });
-      console.log(`[useRecording] Created blob of size: ${blob.size} bytes`);
+      console.log(`[useRecording] Processing ${chunksRef.current.length} chunks`);
+      const blob = new Blob(chunksRef.current, { type: "video/webm" });
+      console.log(`[useRecording] Created blob: ${blob.size} bytes`);
 
       await saveRecordingToDatabase(
         currentProjectId,
@@ -112,36 +98,34 @@ export const useRecording = ({
         blob
       );
 
-      setRecordedChunks([]);
-      console.log("[useRecording] Recording saved and chunks cleared");
+      chunksRef.current = [];
+      console.log("[useRecording] Recording saved successfully");
     } catch (error) {
-      console.error("[useRecording] Error processing recording:", error);
-      toast.error("Failed to process recording");
+      console.error("[useRecording] Error saving recording:", error);
+      toast.error("Failed to save recording");
     }
   };
 
   const handleRecordingClick = () => {
-    console.log("[useRecording] Recording button clicked, current state:", { 
+    console.log("[useRecording] Record button clicked", { 
       isRecording, 
-      currentProjectId, 
-      mediaRecorderState: mediaRecorder?.state 
+      currentProjectId,
+      mediaRecorderState: mediaRecorderRef.current?.state 
     });
 
     if (!isRecording) {
       if (!currentProjectId) {
-        console.log("[useRecording] No project selected, showing project dialog");
+        console.log("[useRecording] No project selected, showing dialog");
         setShowProjectDialog(true);
       } else {
-        console.log("[useRecording] Starting new recording...");
-        startRecording().catch(error => {
-          console.error('[useRecording] Error starting recording:', error);
-        });
+        console.log("[useRecording] Starting new recording");
+        startRecording().catch(console.error);
       }
     } else {
-      if (mediaRecorder && mediaRecorder.state !== 'inactive') {
-        console.log("[useRecording] Stopping active recording...");
-        mediaRecorder.stop();
-        const tracks = mediaRecorder.stream.getTracks();
+      if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
+        console.log("[useRecording] Stopping recording");
+        mediaRecorderRef.current.stop();
+        const tracks = mediaRecorderRef.current.stream.getTracks();
         tracks.forEach(track => {
           console.log(`[useRecording] Stopping track: ${track.kind}`);
           track.stop();
@@ -154,27 +138,24 @@ export const useRecording = ({
   };
 
   const handlePauseResume = () => {
-    if (mediaRecorder) {
+    if (mediaRecorderRef.current) {
       if (isPaused) {
-        console.log("[useRecording] Resuming recording...");
-        mediaRecorder.resume();
+        console.log("[useRecording] Resuming recording");
+        mediaRecorderRef.current.resume();
       } else {
-        console.log("[useRecording] Pausing recording...");
-        mediaRecorder.pause();
+        console.log("[useRecording] Pausing recording");
+        mediaRecorderRef.current.pause();
       }
     }
   };
 
   const handleSaveBoardClick = async () => {
-    console.log("[useRecording] Save board button clicked");
-    if (mediaRecorder && mediaRecorder.state === 'recording') {
-      console.log("[useRecording] Stopping active recording before saving board");
-      mediaRecorder.stop();
-    } else if (recordedChunks.length > 0) {
-      console.log("[useRecording] Saving existing recording chunks");
-      await handleSaveRecording();
+    console.log("[useRecording] Save board clicked");
+    if (mediaRecorderRef.current?.state === 'recording') {
+      console.log("[useRecording] Stopping recording before saving board");
+      mediaRecorderRef.current.stop();
     }
-    console.log("[useRecording] Proceeding to save board state");
+    console.log("[useRecording] Saving board state");
     await onSaveBoard();
   };
 
