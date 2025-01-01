@@ -106,29 +106,14 @@ export const useRecording = ({
       const blob = new Blob(recordedChunks, { type: "video/webm" });
       console.log(`[useRecording] Created blob of size: ${blob.size} bytes`);
 
-      console.log("[useRecording] Converting blob to base64...");
-      const reader = new FileReader();
-      reader.onloadend = async () => {
-        if (reader.result && typeof reader.result === 'string') {
-          console.log("[useRecording] Base64 conversion complete");
-          try {
-            console.log("[useRecording] Saving recording to database...");
-            const result = await saveRecordingToDatabase(
-              currentProjectId,
-              `Recording ${new Date().toISOString()}`,
-              reader.result
-            );
-            console.log("[useRecording] Recording saved successfully:", result);
-            setRecordedChunks([]);
-            toast.success("Recording saved successfully");
-          } catch (error) {
-            console.error("[useRecording] Database save failed:", error);
-            toast.error("Failed to save recording");
-          }
-        }
-      };
+      await saveRecordingToDatabase(
+        currentProjectId,
+        `Recording ${new Date().toISOString()}`,
+        blob
+      );
 
-      reader.readAsDataURL(blob);
+      setRecordedChunks([]);
+      console.log("[useRecording] Recording saved and chunks cleared");
     } catch (error) {
       console.error("[useRecording] Error processing recording:", error);
       toast.error("Failed to process recording");

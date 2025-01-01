@@ -4,30 +4,13 @@ import { supabase } from "@/integrations/supabase/client";
 export const saveRecordingToDatabase = async (
   projectId: string,
   recordingName: string,
-  videoData: string
+  videoBlob: Blob
 ) => {
   try {
     console.log("[recordingUtils] Starting video upload process...");
     console.log("[recordingUtils] Project ID:", projectId);
     console.log("[recordingUtils] Recording name:", recordingName);
-    
-    // Convert base64 to blob
-    const base64Data = videoData.split(',')[1];
-    const byteCharacters = atob(base64Data);
-    const byteArrays = [];
-    
-    for (let offset = 0; offset < byteCharacters.length; offset += 512) {
-      const slice = byteCharacters.slice(offset, offset + 512);
-      const byteNumbers = new Array(slice.length);
-      for (let i = 0; i < slice.length; i++) {
-        byteNumbers[i] = slice.charCodeAt(i);
-      }
-      const byteArray = new Uint8Array(byteNumbers);
-      byteArrays.push(byteArray);
-    }
-    
-    const blob = new Blob(byteArrays, { type: 'video/webm' });
-    console.log("[recordingUtils] Blob created:", blob.size, "bytes");
+    console.log("[recordingUtils] Video blob size:", videoBlob.size);
 
     // Generate unique filename
     const fileName = `${Date.now()}-${recordingName}.webm`;
@@ -36,7 +19,7 @@ export const saveRecordingToDatabase = async (
     // Upload to storage bucket
     const { data: uploadData, error: uploadError } = await supabase.storage
       .from('videos')
-      .upload(fileName, blob, {
+      .upload(fileName, videoBlob, {
         contentType: 'video/webm',
         upsert: false
       });
@@ -73,9 +56,11 @@ export const saveRecordingToDatabase = async (
     }
 
     console.log('[recordingUtils] Recording saved in database:', recordingData);
+    toast.success("Recording saved successfully!");
     return recordingData;
   } catch (error) {
     console.error('[recordingUtils] Error in saveRecordingToDatabase:', error);
+    toast.error("Failed to save recording");
     throw error;
   }
 };
