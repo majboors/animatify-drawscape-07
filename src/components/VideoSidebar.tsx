@@ -32,6 +32,7 @@ export const VideoSidebar = ({
     id: string;
     name: string;
     created_at: string;
+    video_data: string | null;
   }>>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [videoUrl, setVideoUrl] = useState<string | null>(null);
@@ -50,11 +51,14 @@ export const VideoSidebar = ({
       
       const { data: recordingsData, error } = await supabase
         .from('recordings')
-        .select('*')
+        .select('id, name, created_at, video_data')
         .eq('project_id', projectId)
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching recordings:', error);
+        throw error;
+      }
 
       console.log("Recordings loaded:", recordingsData);
       setRecordings(recordingsData || []);
@@ -90,24 +94,16 @@ export const VideoSidebar = ({
 
   const playRecording = async (recordingId: string) => {
     try {
-      setIsLoading(true);
-      const { data, error } = await supabase
-        .from('recordings')
-        .select('video_data')
-        .eq('id', recordingId)
-        .single();
-
-      if (error) throw error;
-
-      if (data?.video_data) {
-        setVideoUrl(data.video_data);
+      const recording = recordings.find(r => r.id === recordingId);
+      if (recording?.video_data) {
+        setVideoUrl(recording.video_data);
         setShowPreviewDialog(true);
+      } else {
+        toast.error("No video data available");
       }
     } catch (error) {
       console.error('Error playing recording:', error);
       toast.error("Failed to play recording");
-    } finally {
-      setIsLoading(false);
     }
   };
 
@@ -133,19 +129,25 @@ export const VideoSidebar = ({
               onSelectProject={setSelectedProject}
             />
 
-            {selectedProject && recordings.length > 0 && (
+            {selectedProject && (
               <div className="space-y-2">
                 <h3 className="font-medium">Recordings</h3>
-                <div className="space-y-1">
-                  {recordings.map((recording) => (
-                    <VideoListItem
-                      key={recording.id}
-                      recording={recording}
-                      onPlay={playRecording}
-                      onDelete={deleteRecording}
-                    />
-                  ))}
-                </div>
+                {isLoading ? (
+                  <p className="text-sm text-gray-500">Loading recordings...</p>
+                ) : recordings.length > 0 ? (
+                  <div className="space-y-1">
+                    {recordings.map((recording) => (
+                      <VideoListItem
+                        key={recording.id}
+                        recording={recording}
+                        onPlay={playRecording}
+                        onDelete={deleteRecording}
+                      />
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-sm text-gray-500">No recordings found</p>
+                )}
               </div>
             )}
           </div>
