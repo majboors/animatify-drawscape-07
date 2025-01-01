@@ -56,6 +56,18 @@ export const RecordingControls = ({
 
   return (
     <div className="flex gap-2">
+      {isRecording && (
+        <Button
+          variant="destructive"
+          size="sm"
+          onClick={handleSaveClick}
+          className="mr-2"
+        >
+          <Save className="h-4 w-4 mr-1" />
+          Save Board
+        </Button>
+      )}
+
       <Button
         variant="outline"
         size="icon"
@@ -76,15 +88,6 @@ export const RecordingControls = ({
         ) : (
           <Pause className="h-4 w-4" />
         )}
-      </Button>
-
-      <Button 
-        variant="outline" 
-        size="icon" 
-        onClick={handleSaveClick}
-        disabled={!isRecording}
-      >
-        <Save className="h-4 w-4" />
       </Button>
 
       <ScreenRecorder ref={screenRecorderRef} />
