@@ -12,7 +12,12 @@ import {
 
 export const NewSidebar = () => {
   const [isOpen, setIsOpen] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(false);
   const [output, setOutput] = useState("");
+
+  const handleToggleFullscreen = () => {
+    setIsFullscreen(!isFullscreen);
+  };
 
   return (
     <>
@@ -26,9 +31,19 @@ export const NewSidebar = () => {
       </Button>
 
       <Sheet open={isOpen} onOpenChange={setIsOpen}>
-        <SheetContent side="right" className="w-[400px] sm:w-[540px] p-0">
-          <NewSidebarHeader onClose={() => setIsOpen(false)} />
-          <NewSidebarContent onOutputChange={setOutput} />
+        <SheetContent 
+          side="right" 
+          className={`p-0 ${isFullscreen ? 'w-screen h-screen' : 'w-[400px] sm:w-[540px]'}`}
+        >
+          <NewSidebarHeader 
+            onClose={() => setIsOpen(false)} 
+            isFullscreen={isFullscreen}
+            onToggleFullscreen={handleToggleFullscreen}
+          />
+          <NewSidebarContent 
+            onOutputChange={setOutput} 
+            isFullscreen={isFullscreen}
+          />
           <NewSidebarFooter />
         </SheetContent>
       </Sheet>
