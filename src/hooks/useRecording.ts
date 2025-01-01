@@ -1,5 +1,5 @@
 import { useState, useCallback, useRef } from "react";
-import { startScreenRecording, saveRecordingToDatabase } from "@/utils/recordingUtils";
+import { startScreenRecording, saveRecordingToStorage } from "@/utils/recordingUtils";
 import { toast } from "sonner";
 
 interface UseRecordingProps {
@@ -23,7 +23,6 @@ export const useRecording = ({
   const [previewVideoUrl, setPreviewVideoUrl] = useState<string | null>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
-  const [previewStream, setPreviewStream] = useState<MediaStream | null>(null);
 
   const startRecording = useCallback(async () => {
     try {
@@ -35,10 +34,9 @@ export const useRecording = ({
       }
       
       console.log("[useRecording] Got media stream:", stream.id);
-      setPreviewStream(stream);
 
       const recorder = new MediaRecorder(stream, {
-        mimeType: 'video/webm;codecs=h264'
+        mimeType: 'video/webm;codecs=vp8,opus'
       });
       
       recorder.ondataavailable = (event) => {
@@ -60,12 +58,12 @@ export const useRecording = ({
         setIsRecording(false);
         
         if (chunksRef.current.length > 0) {
-          const blob = new Blob(chunksRef.current, { type: 'video/mp4' });
+          const blob = new Blob(chunksRef.current, { type: 'video/webm' });
           console.log("[useRecording] Created blob:", blob.size, "bytes");
           
           if (currentProjectId) {
             try {
-              const recordingData = await saveRecordingToDatabase(
+              const recordingData = await saveRecordingToStorage(
                 currentProjectId,
                 `Recording ${new Date().toISOString()}`,
                 blob
@@ -89,7 +87,6 @@ export const useRecording = ({
           track.stop();
           console.log(`[useRecording] Stopped track: ${track.kind}`);
         });
-        setPreviewStream(null);
       };
 
       recorder.onpause = () => {
@@ -134,7 +131,6 @@ export const useRecording = ({
         mediaRecorderRef.current.stop();
         setIsRecording(false);
         setIsPaused(false);
-        setPreviewStream(null);
       }
     }
   };
@@ -169,7 +165,5 @@ export const useRecording = ({
     showPreviewDialog,
     setShowPreviewDialog,
     previewVideoUrl,
-    previewStream,
-    setPreviewStream,
   };
 };
