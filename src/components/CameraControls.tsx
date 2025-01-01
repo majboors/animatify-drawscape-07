@@ -42,7 +42,7 @@ export const CameraControls = ({
     onSaveBoard,
   });
 
-  const { handleCreateProject } = useProjectDialog({
+  const { projectName, setProjectName, handleCreateProject } = useProjectDialog({
     setCurrentProjectId,
     setShowProjectDialog,
     onProjectCreated: handleRecordingClick,
@@ -64,6 +64,8 @@ export const CameraControls = ({
         isOpen={showProjectDialog}
         onOpenChange={setShowProjectDialog}
         onCreateProject={handleCreateProject}
+        projectName={projectName}
+        setProjectName={setProjectName}
       />
       <RecordingPreviewDialog
         isOpen={showPreviewDialog}
