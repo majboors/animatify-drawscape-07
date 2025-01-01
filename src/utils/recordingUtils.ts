@@ -27,16 +27,17 @@ export const startScreenRecording = async () => {
   try {
     console.log("Requesting screen and audio permissions...");
     
+    // Request screen capture
     const screenStream = await navigator.mediaDevices.getDisplayMedia({ 
       video: { 
         displaySurface: "browser",
         width: { ideal: 1920 },
         height: { ideal: 1080 },
         frameRate: { ideal: 30 }
-      },
-      audio: true 
+      }
     });
 
+    // Request microphone separately
     let micStream;
     try {
       micStream = await navigator.mediaDevices.getUserMedia({ 
@@ -47,19 +48,25 @@ export const startScreenRecording = async () => {
       });
     } catch (micError) {
       console.warn('Microphone access denied:', micError);
-      toast.warning("Microphone access denied. Recording without audio.");
+      toast.warning("Recording without audio - microphone access denied");
       return screenStream;
     }
 
-    const combinedStream = new MediaStream([
+    // Combine both streams
+    const tracks = [
       ...screenStream.getVideoTracks(),
       ...micStream.getAudioTracks()
-    ]);
-    
-    return combinedStream;
-  } catch (error) {
+    ];
+
+    return new MediaStream(tracks);
+  } catch (error: any) {
     console.error('Error starting recording:', error);
-    toast.error("Failed to start recording. Please check permissions.");
-    return null;
+    if (error.name === 'NotAllowedError') {
+      throw new Error("Screen sharing permission denied. Please allow access to continue.");
+    } else if (error.name === 'InvalidStateError') {
+      throw new Error("Another recording is already in progress. Please stop it first.");
+    } else {
+      throw new Error("Failed to start recording. Please try again.");
+    }
   }
 };
