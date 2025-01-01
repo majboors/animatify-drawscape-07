@@ -58,6 +58,7 @@ export const VideoListItem = ({ recording, onPlay, onDelete }: VideoListItemProp
             controlsList="nodownload"
           >
             <source src={recording.video_data} type="video/mp4" />
+            Your browser does not support the video tag.
           </video>
           <div className="flex gap-2">
             <Input
