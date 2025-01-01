@@ -17,6 +17,7 @@ export const VideoPlayer = ({ recordingId, onPlay, onDelete }: VideoPlayerProps)
     name: string;
     video_data: string;
   } | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     fetchRecording();
@@ -24,6 +25,9 @@ export const VideoPlayer = ({ recordingId, onPlay, onDelete }: VideoPlayerProps)
 
   const fetchRecording = async () => {
     try {
+      setIsLoading(true);
+      console.log("Fetching recording:", recordingId);
+      
       const { data, error } = await supabase
         .from('recordings')
         .select('id, name, video_data')
@@ -37,11 +41,15 @@ export const VideoPlayer = ({ recordingId, onPlay, onDelete }: VideoPlayerProps)
       }
 
       if (data) {
+        // Ensure we're using the direct video URL
         setRecording(data);
+        console.log("Recording loaded:", data);
       }
     } catch (error) {
       console.error("Error in fetchRecording:", error);
       toast.error("Failed to load recording");
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -51,6 +59,15 @@ export const VideoPlayer = ({ recordingId, onPlay, onDelete }: VideoPlayerProps)
       toast.success("URL copied to clipboard");
     }
   };
+
+  if (isLoading) {
+    return (
+      <div className="space-y-4 p-4 rounded-lg hover:bg-gray-100 animate-pulse">
+        <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+        <div className="h-32 bg-gray-200 rounded"></div>
+      </div>
+    );
+  }
 
   if (!recording) {
     return null;
