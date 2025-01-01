@@ -2,7 +2,7 @@ import { Button } from "./ui/button";
 import { Video, Play, Pause, Save } from "lucide-react";
 import { toast } from "sonner";
 import { ProjectDialog } from "./ProjectDialog";
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { ScreenRecorder } from "./ScreenRecorder";
 
 interface RecordingControlsProps {
@@ -21,7 +21,7 @@ export const RecordingControls = ({
   onSaveBoard,
 }: RecordingControlsProps) => {
   const [showProjectDialog, setShowProjectDialog] = useState(false);
-  const screenRecorderRef = useState<any>(null);
+  const screenRecorderRef = useRef(null);
 
   const handleRecordClick = () => {
     if (!isRecording) {
