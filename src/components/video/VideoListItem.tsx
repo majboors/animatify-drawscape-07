@@ -15,27 +15,9 @@ interface VideoListItemProps {
 }
 
 export const VideoListItem = ({ recording, onPlay, onDelete }: VideoListItemProps) => {
-  // Function to decode hex string using browser-native methods
-  const decodeHexString = (hexString: string) => {
-    try {
-      const bytes = new Uint8Array(
-        hexString.match(/.{1,2}/g)?.map(byte => parseInt(byte, 16)) || []
-      );
-      return new TextDecoder().decode(bytes);
-    } catch (error) {
-      console.error('Error decoding hex string:', error);
-      return recording.video_data; // Return original string if decoding fails
-    }
-  };
-
-  // Convert hex URL to regular URL if needed
-  const videoUrl = recording.video_data?.startsWith('\\x') 
-    ? decodeHexString(recording.video_data.slice(2))
-    : recording.video_data;
-
   const handleCopyUrl = () => {
-    if (videoUrl) {
-      navigator.clipboard.writeText(videoUrl);
+    if (recording.video_data) {
+      navigator.clipboard.writeText(recording.video_data);
       toast.success("URL copied to clipboard");
     }
   };
@@ -65,17 +47,17 @@ export const VideoListItem = ({ recording, onPlay, onDelete }: VideoListItemProp
         </div>
       </div>
 
-      {videoUrl && (
+      {recording.video_data && (
         <>
           <video
-            src={videoUrl}
+            src={recording.video_data}
             className="w-full rounded-lg border h-32 object-cover"
             preload="metadata"
             controls
           />
           <div className="flex gap-2">
             <Input
-              value={videoUrl}
+              value={recording.video_data}
               readOnly
               className="flex-1 text-sm"
             />
