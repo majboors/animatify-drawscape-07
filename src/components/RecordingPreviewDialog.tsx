@@ -56,8 +56,7 @@ export const RecordingPreviewDialog = ({
       console.log("Uploading video to storage bucket...");
 
       // Upload to Supabase storage bucket
-      const { data: storageData, error: storageError } = await supabase
-        .storage
+      const { data: uploadData, error: uploadError } = await supabase.storage
         .from('videos')
         .upload(filePath, videoBlob, {
           contentType: 'video/webm',
@@ -65,16 +64,15 @@ export const RecordingPreviewDialog = ({
           upsert: false
         });
 
-      if (storageError) {
-        console.error("Storage upload error:", storageError);
-        throw storageError;
+      if (uploadError) {
+        console.error("Storage upload error:", uploadError);
+        throw uploadError;
       }
 
       console.log("Video uploaded successfully, getting public URL...");
 
       // Get the public URL from Supabase storage
-      const { data: { publicUrl } } = supabase
-        .storage
+      const { data: { publicUrl } } = supabase.storage
         .from('videos')
         .getPublicUrl(filePath);
 
@@ -86,7 +84,7 @@ export const RecordingPreviewDialog = ({
         .insert({
           project_id: projectId,
           name: `Recording ${new Date().toLocaleString()}`,
-          video_data: publicUrl
+          video_data: publicUrl // Store the actual public URL
         })
         .select()
         .single();
