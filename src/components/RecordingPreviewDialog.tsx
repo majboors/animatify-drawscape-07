@@ -30,8 +30,7 @@ export const RecordingPreviewDialog = ({
 
   const handleCopyUrl = () => {
     if (videoUrl) {
-      const decodedUrl = decodeURIComponent(videoUrl);
-      navigator.clipboard.writeText(decodedUrl);
+      navigator.clipboard.writeText(videoUrl);
       toast.success("URL copied to clipboard");
     }
   };
@@ -68,18 +67,6 @@ export const RecordingPreviewDialog = ({
     }
   };
 
-  const getDecodedUrl = () => {
-    if (!videoUrl) return null;
-    try {
-      return decodeURIComponent(videoUrl);
-    } catch (error) {
-      console.error("Error decoding URL:", error);
-      return videoUrl;
-    }
-  };
-
-  const decodedUrl = getDecodedUrl();
-
   return (
     <>
       <Dialog open={isOpen} onOpenChange={onOpenChange}>
@@ -88,17 +75,17 @@ export const RecordingPreviewDialog = ({
             <DialogTitle>Recording Preview</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
-            {decodedUrl && (
+            {videoUrl && (
               <>
                 <video
-                  src={decodedUrl}
+                  src={videoUrl}
                   controls
                   autoPlay
                   className="w-full rounded-lg border"
                 />
                 <div className="flex gap-2">
                   <Input
-                    value={decodedUrl}
+                    value={videoUrl}
                     readOnly
                     className="flex-1"
                   />

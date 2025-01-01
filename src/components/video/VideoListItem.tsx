@@ -13,6 +13,23 @@ interface VideoListItemProps {
 }
 
 export const VideoListItem = ({ recording, onPlay, onDelete }: VideoListItemProps) => {
+  const getDecodedUrl = (url: string) => {
+    try {
+      // Handle hex-encoded URLs
+      if (url.startsWith('\\x')) {
+        const hexString = url.slice(2); // Remove \x prefix
+        const decoded = Buffer.from(hexString, 'hex').toString();
+        return decoded;
+      }
+      return url;
+    } catch (error) {
+      console.error('Error decoding URL:', error);
+      return url;
+    }
+  };
+
+  const videoUrl = recording.video_data ? getDecodedUrl(recording.video_data) : null;
+
   return (
     <div className="space-y-2 p-2 rounded-lg hover:bg-gray-100">
       <div className="flex items-center justify-between">
@@ -37,9 +54,9 @@ export const VideoListItem = ({ recording, onPlay, onDelete }: VideoListItemProp
           </Button>
         </div>
       </div>
-      {recording.video_data && (
+      {videoUrl && (
         <video
-          src={recording.video_data}
+          src={videoUrl}
           className="w-full rounded-lg border h-32 object-cover"
           preload="metadata"
         />

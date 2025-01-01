@@ -16,16 +16,33 @@ export const VideoPreviewDialog = ({
   onOpenChange,
   videoUrl,
 }: VideoPreviewDialogProps) => {
+  const getDecodedUrl = (url: string) => {
+    try {
+      // Handle hex-encoded URLs
+      if (url.startsWith('\\x')) {
+        const hexString = url.slice(2); // Remove \x prefix
+        const decoded = Buffer.from(hexString, 'hex').toString();
+        return decoded;
+      }
+      return url;
+    } catch (error) {
+      console.error('Error decoding URL:', error);
+      return url;
+    }
+  };
+
+  const decodedUrl = videoUrl ? getDecodedUrl(videoUrl) : null;
+
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[80vw]">
         <DialogHeader>
           <DialogTitle>Recording Preview</DialogTitle>
         </DialogHeader>
-        {videoUrl && (
+        {decodedUrl && (
           <div className="mt-4">
             <video
-              src={videoUrl}
+              src={decodedUrl}
               controls
               autoPlay
               className="w-full rounded-lg"
