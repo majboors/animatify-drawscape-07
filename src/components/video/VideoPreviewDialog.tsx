@@ -27,6 +27,7 @@ export const VideoPreviewDialog = ({
             <video
               src={videoUrl}
               controls
+              autoPlay
               className="w-full rounded-lg"
               onEnded={() => onOpenChange(false)}
             />

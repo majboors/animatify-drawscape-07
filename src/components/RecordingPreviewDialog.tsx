@@ -41,43 +41,29 @@ export const RecordingPreviewDialog = ({
   };
 
   const handleProjectCreated = async (projectId: string) => {
-    if (!videoBlob) {
-      toast.error("No recording data available");
+    if (!videoUrl) {
+      toast.error("No recording URL available");
       return;
     }
 
     try {
-      const filename = `recording-${Date.now()}.webm`;
-      const { error: uploadError } = await supabase.storage
-        .from('videos')
-        .upload(filename, videoBlob, {
-          contentType: 'video/webm',
-          cacheControl: '3600'
-        });
-
-      if (uploadError) throw uploadError;
-
-      const { data: { publicUrl } } = supabase.storage
-        .from('videos')
-        .getPublicUrl(filename);
-
-      console.log("Upload successful, public URL:", publicUrl);
-
-      const { error: dbError } = await supabase
+      const { data, error } = await supabase
         .from('recordings')
-        .insert([{
+        .insert({
           project_id: projectId,
           name: `Recording ${new Date().toLocaleString()}`,
-          video_data: publicUrl
-        }]);
+          video_data: videoUrl
+        })
+        .select()
+        .single();
 
-      if (dbError) throw dbError;
+      if (error) throw error;
 
       setShowProjectDialog(false);
       onOpenChange(false);
       toast.success("Recording saved successfully");
     } catch (error) {
-      console.error("Upload error:", error);
+      console.error("Error saving recording:", error);
       toast.error("Failed to save recording");
     }
   };
