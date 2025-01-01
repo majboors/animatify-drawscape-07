@@ -55,7 +55,9 @@ export const useRecording = ({
         console.log("[useRecording] Recording stopped");
         setIsRecording(false);
         if (chunksRef.current.length > 0) {
-          await handleSaveRecording();
+          const blob = new Blob(chunksRef.current, { type: "video/webm" });
+          console.log("[useRecording] Created blob:", blob.size, "bytes");
+          await handleSaveRecording(blob);
         }
       };
 
@@ -80,7 +82,7 @@ export const useRecording = ({
     }
   }, [setIsRecording, setIsPaused]);
 
-  const handleSaveRecording = async () => {
+  const handleSaveRecording = async (blob: Blob) => {
     if (!currentProjectId) {
       console.error("[useRecording] No project ID available");
       toast.error("No project selected");
@@ -88,16 +90,11 @@ export const useRecording = ({
     }
 
     try {
-      console.log(`[useRecording] Processing ${chunksRef.current.length} chunks`);
-      const blob = new Blob(chunksRef.current, { type: "video/webm" });
-      console.log(`[useRecording] Created blob: ${blob.size} bytes`);
-
       await saveRecordingToDatabase(
         currentProjectId,
         `Recording ${new Date().toISOString()}`,
         blob
       );
-
       chunksRef.current = [];
       console.log("[useRecording] Recording saved successfully");
     } catch (error) {
