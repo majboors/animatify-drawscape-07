@@ -1,11 +1,11 @@
 import { useState } from "react";
-import { Code2, Maximize, Minimize, X } from "lucide-react";
+import { FolderKanban, Maximize, Minimize, X } from "lucide-react";
 import { Button } from "./ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
 import { Textarea } from "./ui/textarea";
 import { toast } from "sonner";
 
-export const CodeSidebar = () => {
+export const ProjectSidebar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [language, setLanguage] = useState("python");
@@ -36,13 +36,13 @@ export const CodeSidebar = () => {
         className="fixed right-4 top-4 z-50"
         onClick={() => setIsOpen(!isOpen)}
       >
-        <Code2 className="h-4 w-4" />
+        <FolderKanban className="h-4 w-4" />
       </Button>
 
       <div className={sidebarClasses}>
         <div className="p-4">
           <div className="flex justify-between items-center mb-4">
-            <h2 className="text-lg font-semibold">Code Editor</h2>
+            <h2 className="text-lg font-semibold">Project Manager</h2>
             <div className="flex gap-2">
               <Button
                 variant="outline"
