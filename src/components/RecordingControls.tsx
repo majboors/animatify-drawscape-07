@@ -3,6 +3,7 @@ import { Video, Play, Pause, Save } from "lucide-react";
 import { toast } from "sonner";
 import { ProjectDialog } from "./ProjectDialog";
 import { useState } from "react";
+import { ScreenRecorder } from "./ScreenRecorder";
 
 interface RecordingControlsProps {
   isRecording: boolean;
@@ -20,6 +21,7 @@ export const RecordingControls = ({
   onSaveBoard,
 }: RecordingControlsProps) => {
   const [showProjectDialog, setShowProjectDialog] = useState(false);
+  const screenRecorderRef = useState<any>(null);
 
   const handleRecordClick = () => {
     if (!isRecording) {
@@ -32,8 +34,11 @@ export const RecordingControls = ({
 
   const handleProjectCreated = (projectId: string) => {
     setShowProjectDialog(false);
-    console.log("[RecordingControls] Project selected, starting recording");
+    console.log("[RecordingControls] Project selected, starting recording with ID:", projectId);
     onRecordingClick();
+    if (screenRecorderRef.current) {
+      screenRecorderRef.current.startRecording();
+    }
   };
 
   const handlePauseResumeClick = () => {
@@ -78,6 +83,8 @@ export const RecordingControls = ({
           </Button>
         </>
       )}
+
+      <ScreenRecorder ref={screenRecorderRef} />
 
       <ProjectDialog
         isOpen={showProjectDialog}
