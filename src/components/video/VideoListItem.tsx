@@ -49,17 +49,19 @@ export const VideoListItem = ({ recording, onPlay, onDelete }: VideoListItemProp
 
       {recording.video_data && (
         <>
-          <video
-            src={recording.video_data}
-            className="w-full rounded-lg border h-32 object-cover"
-            preload="metadata"
-            controls
-          />
+          <div className="relative w-full aspect-video">
+            <video
+              src={recording.video_data}
+              className="absolute inset-0 w-full h-full object-contain bg-black rounded-lg"
+              preload="metadata"
+              controls
+            />
+          </div>
           <div className="flex gap-2">
             <Input
               value={recording.video_data}
               readOnly
-              className="flex-1 text-sm"
+              className="flex-1 text-sm font-mono"
             />
             <Button
               variant="outline"
