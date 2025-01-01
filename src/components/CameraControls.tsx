@@ -60,18 +60,22 @@ export const CameraControls = ({
       <Button variant="outline" size="icon" onClick={onToggleSidebar}>
         <Sidebar className="h-4 w-4" />
       </Button>
-      <ProjectDialog
-        isOpen={showProjectDialog}
-        onOpenChange={setShowProjectDialog}
-        onCreateProject={handleCreateProject}
-        projectName={projectName}
-        setProjectName={setProjectName}
-      />
-      <RecordingPreviewDialog
-        isOpen={showPreviewDialog}
-        onOpenChange={setShowPreviewDialog}
-        videoUrl={previewVideoUrl}
-      />
+      {showProjectDialog && (
+        <ProjectDialog
+          isOpen={showProjectDialog}
+          onOpenChange={setShowProjectDialog}
+          onCreateProject={handleCreateProject}
+          projectName={projectName}
+          setProjectName={setProjectName}
+        />
+      )}
+      {showPreviewDialog && (
+        <RecordingPreviewDialog
+          isOpen={showPreviewDialog}
+          onOpenChange={setShowPreviewDialog}
+          videoUrl={previewVideoUrl}
+        />
+      )}
     </div>
   );
 };

@@ -30,11 +30,13 @@ export const useProjectDialog = ({
 
       if (error) throw error;
 
-      setCurrentProjectId(data.id);
-      setShowProjectDialog(false);
-      setProjectName("");
-      onProjectCreated();
-      toast.success("Project created successfully");
+      if (data) {
+        setCurrentProjectId(data.id);
+        setShowProjectDialog(false);
+        setProjectName("");
+        onProjectCreated();
+        toast.success("Project created successfully");
+      }
     } catch (error) {
       console.error('Error creating project:', error);
       toast.error("Failed to create project");
