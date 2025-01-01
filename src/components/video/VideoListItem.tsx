@@ -22,27 +22,6 @@ export const VideoListItem = ({ recording, onPlay, onDelete }: VideoListItemProp
     }
   };
 
-  const decodeVideoUrl = (url: string) => {
-    try {
-      // If it's a valid URL, return as is
-      if (url.startsWith('http') || url.startsWith('data:')) {
-        return url;
-      }
-      
-      // Remove any blob: prefix
-      url = url.replace('blob:', '');
-      
-      // Remove any \x prefix from hex values
-      url = url.replace(/\\x/g, '%');
-      
-      // Decode the URL
-      return decodeURIComponent(url);
-    } catch (error) {
-      console.error('Error decoding URL:', error);
-      return url;
-    }
-  };
-
   return (
     <div className="space-y-4 p-4 rounded-lg hover:bg-gray-100">
       <div className="flex items-center justify-between">
@@ -71,7 +50,7 @@ export const VideoListItem = ({ recording, onPlay, onDelete }: VideoListItemProp
       {recording.video_data && (
         <>
           <video
-            src={decodeVideoUrl(recording.video_data)}
+            src={recording.video_data}
             className="w-full rounded-lg border h-32 object-cover"
             preload="metadata"
             controls
