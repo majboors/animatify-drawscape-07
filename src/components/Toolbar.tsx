@@ -1,6 +1,7 @@
 import { Square, Circle, Pencil, MousePointer, Triangle as TriangleIcon, Star, Minus, Copy, Clipboard, PaintBucket, Type, Group as GroupIcon, Ungroup, Save } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import { FileUpload } from "./FileUpload";
 import {
   Select,
   SelectContent,
@@ -23,6 +24,7 @@ interface ToolbarProps {
   onGroup?: () => void;
   onUngroup?: () => void;
   onSaveBoard?: () => void;
+  onImageUpload?: (url: string) => void;
 }
 
 export const Toolbar = ({ 
@@ -37,7 +39,8 @@ export const Toolbar = ({
   onPaste,
   onGroup,
   onUngroup,
-  onSaveBoard
+  onSaveBoard,
+  onImageUpload
 }: ToolbarProps) => {
   const tools = [
     { id: "select", icon: MousePointer, label: "Select" },
@@ -121,6 +124,8 @@ export const Toolbar = ({
           </Button>
         ))}
       </div>
+      <div className="w-px h-8 bg-gray-200 mx-2" />
+      <FileUpload onUploadComplete={onImageUpload || (() => {})} />
       <div className="w-px h-8 bg-gray-200 mx-2" />
       <div className="flex space-x-1">
         {actions.map((action) => (

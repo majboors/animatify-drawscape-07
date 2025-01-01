@@ -17,6 +17,16 @@ const Index = () => {
   const [showProjectDialog, setShowProjectDialog] = useState(false);
   const canvasRef = useRef<CanvasRef>(null);
 
+  const handleImageUpload = (url: string) => {
+    if (canvasRef.current) {
+      const canvas = canvasRef.current.getFabricCanvas();
+      if (canvas) {
+        // @ts-ignore - handleImageUpload exists but TypeScript doesn't know about it
+        canvas.handleImageUpload(url);
+      }
+    }
+  };
+
   const handleProjectCreated = (projectId: string) => {
     setShowProjectDialog(false);
     setIsVideoSidebarOpen(true);
@@ -32,6 +42,7 @@ const Index = () => {
         onToolChange={setActiveTool}
         onColorChange={setActiveColor}
         onFontChange={setActiveFont}
+        onImageUpload={handleImageUpload}
       />
       <Canvas
         ref={canvasRef}

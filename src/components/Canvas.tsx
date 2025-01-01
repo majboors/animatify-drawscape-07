@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, forwardRef, useImperativeHandle } from "react";
-import { Canvas as FabricCanvas, IText, Object as FabricObject, PencilBrush, util } from "fabric";
+import { Canvas as FabricCanvas, IText, Object as FabricObject, PencilBrush, util, Image } from "fabric";
 import { toast } from "sonner";
 import { ExtendedCanvas } from "../types/fabric";
 import { useShapeCreation } from "../hooks/useShapeCreation";
@@ -193,6 +193,30 @@ export const Canvas = forwardRef<CanvasRef, CanvasProps>(({ activeTool, activeCo
       fabricCanvas.requestRenderAll();
     }
   }, [activeTool, activeColor, activeFont, fabricCanvas]);
+
+  const handleImageUpload = (url: string) => {
+    if (!fabricCanvas) return;
+
+    Image.fromURL(url, (img) => {
+      // Scale image to fit within canvas while maintaining aspect ratio
+      const canvasWidth = fabricCanvas.width || window.innerWidth;
+      const canvasHeight = fabricCanvas.height || window.innerHeight - 100;
+      const scale = Math.min(
+        (canvasWidth * 0.5) / img.width!,
+        (canvasHeight * 0.5) / img.height!
+      );
+
+      img.scale(scale);
+      img.set({
+        left: (canvasWidth - img.width! * scale) / 2,
+        top: (canvasHeight - img.height! * scale) / 2
+      });
+
+      fabricCanvas.add(img);
+      fabricCanvas.setActiveObject(img);
+      fabricCanvas.requestRenderAll();
+    });
+  };
 
   return (
     <div className="w-full h-[calc(100vh-64px)] bg-gray-50 overflow-hidden">
