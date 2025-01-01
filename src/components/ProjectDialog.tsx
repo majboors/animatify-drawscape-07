@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -9,10 +9,10 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 interface ProjectDialogProps {
   isOpen: boolean;
@@ -85,6 +85,7 @@ export const ProjectDialog = ({
       toast.error("Please select a project");
       return;
     }
+    console.log("[ProjectDialog] Starting recording with project:", selectedProject);
     onProjectCreated(selectedProject);
     onOpenChange(false);
   };
@@ -105,7 +106,6 @@ export const ProjectDialog = ({
               <RadioGroup
                 value={selectedProject || ""}
                 onValueChange={setSelectedProject}
-                className="space-y-2"
               >
                 {projects.map((project) => (
                   <div key={project.id} className="flex items-center space-x-2">
@@ -122,7 +122,10 @@ export const ProjectDialog = ({
               >
                 Create New Project
               </Button>
-              <Button onClick={handleStartRecording}>
+              <Button 
+                onClick={handleStartRecording}
+                disabled={!selectedProject}
+              >
                 Start Recording
               </Button>
             </DialogFooter>
