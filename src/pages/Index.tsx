@@ -1,12 +1,12 @@
 import { useState, useRef } from "react";
 import { Toolbar } from "@/components/Toolbar";
 import { Canvas, CanvasRef } from "@/components/Canvas";
-import { NewSidebar } from "@/components/sidebar/NewSidebar";
 import { VideoSidebar } from "@/components/VideoSidebar";
 import { CameraControls } from "@/components/CameraControls";
 import { UserCamera } from "@/components/UserCamera";
 import { ProjectDialog } from "@/components/ProjectDialog";
 import { saveBoardState } from "@/utils/boardState";
+import { AppSidebar } from "@/components/sidebar/AppSidebar";
 
 const Index = () => {
   const [activeTool, setActiveTool] = useState("select");
@@ -41,7 +41,7 @@ const Index = () => {
         activeColor={activeColor}
         activeFont={activeFont}
       />
-      <NewSidebar side="right" />
+      <AppSidebar />
       <VideoSidebar
         isOpen={isVideoSidebarOpen}
         onOpenChange={setIsVideoSidebarOpen}
