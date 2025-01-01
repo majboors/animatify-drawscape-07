@@ -17,7 +17,6 @@ interface VideoListItemProps {
 export const VideoListItem = ({ recording, onPlay, onDelete }: VideoListItemProps) => {
   const handleCopyUrl = () => {
     if (recording.video_data) {
-      // Decode the video URL before copying
       const decodedUrl = decodeVideoUrl(recording.video_data);
       navigator.clipboard.writeText(decodedUrl);
       toast.success("URL copied to clipboard");
@@ -25,10 +24,24 @@ export const VideoListItem = ({ recording, onPlay, onDelete }: VideoListItemProp
   };
 
   const decodeVideoUrl = (encodedUrl: string) => {
-    // Remove the blob: prefix and decode the hex string
-    const hexString = encodedUrl.replace('\\x', '');
-    const decodedString = Buffer.from(hexString, 'hex').toString('utf-8');
-    return decodedString.replace('blob:', '');
+    try {
+      // Remove any blob: prefix if present
+      const cleanUrl = encodedUrl.replace('blob:', '');
+      // If the URL is already in a valid format, return it
+      if (cleanUrl.startsWith('http') || cleanUrl.startsWith('data:')) {
+        return cleanUrl;
+      }
+      // If it's base64 encoded, decode it
+      if (cleanUrl.startsWith('data:video/mp4;base64,')) {
+        return cleanUrl;
+      }
+      // For hex-encoded strings, decode them
+      const decoded = decodeURIComponent(cleanUrl);
+      return decoded;
+    } catch (error) {
+      console.error('Error decoding URL:', error);
+      return encodedUrl; // Return original URL if decoding fails
+    }
   };
 
   const videoUrl = recording.video_data ? decodeVideoUrl(recording.video_data) : '';
