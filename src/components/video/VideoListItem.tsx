@@ -15,7 +15,26 @@ interface VideoListItemProps {
 }
 
 export const VideoListItem = ({ recording, onPlay, onDelete }: VideoListItemProps) => {
-  const videoUrl = recording.video_data;
+  // Decode the hex string to get the actual URL
+  const decodeHexString = (hexString: string) => {
+    try {
+      // Remove the '\x' prefix if present
+      const cleanHex = hexString.replace(/^\\x/, '');
+      // Convert hex to bytes
+      const bytes = new Uint8Array(
+        cleanHex.match(/.{1,2}/g)?.map(byte => parseInt(byte, 16)) || []
+      );
+      // Convert bytes to string
+      const decodedString = new TextDecoder().decode(bytes);
+      // If the string starts with 'blob:', extract the actual URL
+      return decodedString.replace(/^blob:/, '');
+    } catch (error) {
+      console.error('Error decoding hex string:', error);
+      return null;
+    }
+  };
+
+  const videoUrl = recording.video_data ? decodeHexString(recording.video_data) : null;
 
   const handleCopyUrl = () => {
     if (videoUrl) {
