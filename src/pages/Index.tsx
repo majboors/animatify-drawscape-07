@@ -1,7 +1,7 @@
 import { useState, useRef } from "react";
 import { Toolbar } from "@/components/Toolbar";
 import { Canvas, CanvasRef } from "@/components/Canvas";
-import { ProjectSidebar } from "@/components/ProjectSidebar";
+import { NewSidebar } from "@/components/sidebar/NewSidebar";
 import { VideoSidebar } from "@/components/VideoSidebar";
 import { CameraControls } from "@/components/CameraControls";
 import { UserCamera } from "@/components/UserCamera";
@@ -41,7 +41,7 @@ const Index = () => {
         activeColor={activeColor}
         activeFont={activeFont}
       />
-      <ProjectSidebar />
+      <NewSidebar side="right" />
       <VideoSidebar
         isOpen={isVideoSidebarOpen}
         onOpenChange={setIsVideoSidebarOpen}
