@@ -1,5 +1,5 @@
-import { useState, useRef, useEffect } from "react";
-import { Camera, Video, Pause, Play, List, Save } from "lucide-react";
+import { useState } from "react";
+import { Camera, List } from "lucide-react";
 import { Button } from "./ui/button";
 import {
   Dialog,
@@ -13,6 +13,8 @@ import { Input } from "./ui/input";
 import { toast } from "sonner";
 import { useRecording } from "@/hooks/useRecording";
 import { useProjectDialog } from "@/hooks/useProjectDialog";
+import { RecordingPreview } from "./RecordingPreview";
+import { RecordingControls } from "./RecordingControls";
 
 interface CameraControlsProps {
   onToggleSidebar: () => void;
@@ -32,18 +34,14 @@ export const CameraControls = ({
   setIsPaused,
 }: CameraControlsProps) => {
   const [showControls, setShowControls] = useState(false);
-  const [showProjectDialog, setShowProjectDialog] = useState(false);
-  const videoPreviewRef = useRef<HTMLVideoElement>(null);
   
   const {
     handleRecordingClick,
     handlePauseResume,
     handleSaveBoardClick,
-    currentProjectId,
-    setCurrentProjectId,
-    startRecording,
+    showProjectDialog,
+    setShowProjectDialog,
     previewStream,
-    setPreviewStream,
   } = useRecording({
     isRecording,
     setIsRecording,
@@ -58,61 +56,23 @@ export const CameraControls = ({
     handleCreateProject,
   } = useProjectDialog({
     setIsRecording,
-    setCurrentProjectId,
-    startRecording,
+    setCurrentProjectId: () => {},
+    startRecording: async () => {},
   });
-
-  // Handle preview stream
-  useEffect(() => {
-    if (videoPreviewRef.current && previewStream) {
-      videoPreviewRef.current.srcObject = previewStream;
-    }
-  }, [previewStream]);
 
   return (
     <div className="fixed bottom-4 right-4 z-50 flex flex-col items-end space-y-2">
-      {previewStream && (
-        <video
-          ref={videoPreviewRef}
-          autoPlay
-          playsInline
-          muted
-          className="rounded-lg w-48 h-36 object-cover border-2 border-white shadow-lg mb-2"
-        />
-      )}
+      <RecordingPreview stream={previewStream} />
       <div className="flex items-center space-x-2">
         {showControls && (
           <>
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={handleRecordingClick}
-              className={isRecording ? "bg-red-500 text-white hover:bg-red-600" : ""}
-            >
-              <Video className="h-4 w-4" />
-            </Button>
-            {isRecording && (
-              <>
-                <Button
-                  variant="outline"
-                  size="icon"
-                  onClick={handlePauseResume}
-                >
-                  {isPaused ? (
-                    <Play className="h-4 w-4" />
-                  ) : (
-                    <Pause className="h-4 w-4" />
-                  )}
-                </Button>
-                <Button 
-                  variant="outline" 
-                  size="icon" 
-                  onClick={handleSaveBoardClick}
-                >
-                  <Save className="h-4 w-4" />
-                </Button>
-              </>
-            )}
+            <RecordingControls
+              isRecording={isRecording}
+              isPaused={isPaused}
+              onRecordingClick={handleRecordingClick}
+              onPauseResume={handlePauseResume}
+              onSaveBoard={handleSaveBoardClick}
+            />
             <Button variant="outline" size="icon" onClick={onToggleSidebar}>
               <List className="h-4 w-4" />
             </Button>
