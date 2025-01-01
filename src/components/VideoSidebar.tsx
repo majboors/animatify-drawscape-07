@@ -4,6 +4,7 @@ import { Button } from "./ui/button";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { ProjectList } from "./project/ProjectList";
+import { ScrollArea } from "./ui/scroll-area";
 import {
   Sheet,
   SheetContent,
@@ -117,8 +118,8 @@ export const VideoSidebar = ({
   return (
     <>
       <Sheet open={isOpen} onOpenChange={onOpenChange}>
-        <SheetContent side="left" className="w-[400px] sm:w-[540px]">
-          <SheetHeader className="flex flex-row items-center justify-between">
+        <SheetContent side="left" className="w-[400px] sm:w-[540px] p-0">
+          <SheetHeader className="p-6">
             <SheetTitle className="flex items-center gap-2">
               <FolderKanban className="h-5 w-5" />
               Projects & Recordings
@@ -130,34 +131,36 @@ export const VideoSidebar = ({
             </SheetClose>
           </SheetHeader>
           
-          <div className="mt-4 space-y-4">
-            <ProjectList
-              selectedProject={selectedProject}
-              onSelectProject={setSelectedProject}
-            />
+          <ScrollArea className="h-[calc(100vh-100px)]">
+            <div className="p-6 space-y-4">
+              <ProjectList
+                selectedProject={selectedProject}
+                onSelectProject={setSelectedProject}
+              />
 
-            {selectedProject && (
-              <div className="space-y-2">
-                <h3 className="font-medium">Recordings</h3>
-                {isLoading ? (
-                  <p className="text-sm text-gray-500">Loading recordings...</p>
-                ) : recordings.length > 0 ? (
-                  <div className="space-y-1">
-                    {recordings.map((recording) => (
-                      <VideoListItem
-                        key={recording.id}
-                        recording={recording}
-                        onPlay={playRecording}
-                        onDelete={deleteRecording}
-                      />
-                    ))}
-                  </div>
-                ) : (
-                  <p className="text-sm text-gray-500">No recordings found</p>
-                )}
-              </div>
-            )}
-          </div>
+              {selectedProject && (
+                <div className="space-y-2">
+                  <h3 className="font-medium">Recordings</h3>
+                  {isLoading ? (
+                    <p className="text-sm text-gray-500">Loading recordings...</p>
+                  ) : recordings.length > 0 ? (
+                    <div className="space-y-1">
+                      {recordings.map((recording) => (
+                        <VideoListItem
+                          key={recording.id}
+                          recording={recording}
+                          onPlay={playRecording}
+                          onDelete={deleteRecording}
+                        />
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-sm text-gray-500">No recordings found</p>
+                  )}
+                </div>
+              )}
+            </div>
+          </ScrollArea>
         </SheetContent>
       </Sheet>
 

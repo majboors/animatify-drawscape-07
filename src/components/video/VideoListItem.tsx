@@ -17,16 +17,13 @@ interface VideoListItemProps {
 export const VideoListItem = ({ recording, onPlay, onDelete }: VideoListItemProps) => {
   const getDecodedUrl = (url: string) => {
     try {
+      if (!url) return null;
+      
       // Handle hex-encoded URLs
       if (url.startsWith('\\x')) {
         // Remove \x prefix and decode hex
         const hexString = url.slice(2);
         const decoded = Buffer.from(hexString, 'hex').toString();
-        
-        // If it starts with 'blob:', return the URL part after it
-        if (decoded.startsWith('blob:')) {
-          return decoded.substring(5);
-        }
         return decoded;
       }
       return url;
