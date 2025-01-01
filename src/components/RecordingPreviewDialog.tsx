@@ -23,8 +23,8 @@ export const RecordingPreviewDialog = ({
   const [isUploading, setIsUploading] = useState(false);
 
   const handleSaveRecording = async () => {
-    if (!videoBlob) {
-      toast.error("No recording to save");
+    if (!videoBlob || !projectId) {
+      toast.error("No recording or project to save");
       return;
     }
 
@@ -32,7 +32,7 @@ export const RecordingPreviewDialog = ({
     try {
       console.log("Starting video upload process...");
       const timestamp = Date.now();
-      const filePath = `recording-${timestamp}.mp4`;
+      const filePath = `${projectId}/${timestamp}.mp4`;
 
       console.log("Uploading video to storage bucket...");
       const { data: uploadData, error: uploadError } = await supabase.storage
@@ -52,7 +52,7 @@ export const RecordingPreviewDialog = ({
         .from('videos')
         .getPublicUrl(filePath);
 
-      console.log("Video uploaded successfully, direct URL:", publicUrl);
+      console.log("Video uploaded successfully, public URL:", publicUrl);
 
       // Save recording metadata to database with direct URL and project ID
       const { data: recordingData, error: dbError } = await supabase
@@ -95,11 +95,13 @@ export const RecordingPreviewDialog = ({
         </DialogHeader>
         <div className="space-y-4">
           {videoBlob && (
-            <video
-              src={URL.createObjectURL(videoBlob)}
-              controls
-              className="w-full rounded-lg border"
-            />
+            <div className="relative w-full aspect-video">
+              <video
+                src={URL.createObjectURL(videoBlob)}
+                controls
+                className="absolute inset-0 w-full h-full object-contain bg-black rounded-lg"
+              />
+            </div>
           )}
           <div className="flex gap-2">
             <Button
@@ -117,7 +119,7 @@ export const RecordingPreviewDialog = ({
               <Input
                 value={videoUrl}
                 readOnly
-                className="flex-1"
+                className="flex-1 text-sm font-mono"
               />
               <Button
                 variant="outline"
