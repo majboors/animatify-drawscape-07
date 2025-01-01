@@ -5,6 +5,7 @@ import { ProjectSidebar } from "@/components/ProjectSidebar";
 import { VideoSidebar } from "@/components/VideoSidebar";
 import { CameraControls } from "@/components/CameraControls";
 import { UserCamera } from "@/components/UserCamera";
+import { ProjectDialog } from "@/components/ProjectDialog";
 import { saveBoardState } from "@/utils/boardState";
 
 const Index = () => {
@@ -15,7 +16,13 @@ const Index = () => {
   const [isPaused, setIsPaused] = useState(false);
   const [isVideoSidebarOpen, setIsVideoSidebarOpen] = useState(false);
   const [currentRecordingId, setCurrentRecordingId] = useState<string | null>(null);
+  const [showProjectDialog, setShowProjectDialog] = useState(false);
   const canvasRef = useRef<CanvasRef>(null);
+
+  const handleProjectCreated = (projectId: string) => {
+    setShowProjectDialog(false);
+    setIsVideoSidebarOpen(true);
+  };
 
   return (
     <div className="h-screen flex flex-col">
@@ -52,8 +59,14 @@ const Index = () => {
         setIsRecording={setIsRecording}
         isPaused={isPaused}
         setIsPaused={setIsPaused}
+        onStartRecording={() => setShowProjectDialog(true)}
       />
       <UserCamera />
+      <ProjectDialog
+        isOpen={showProjectDialog}
+        onOpenChange={setShowProjectDialog}
+        onProjectCreated={handleProjectCreated}
+      />
     </div>
   );
 };

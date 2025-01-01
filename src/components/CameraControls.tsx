@@ -1,15 +1,16 @@
+import { FolderKanban } from "lucide-react";
 import { Button } from "./ui/button";
-import { Code } from "lucide-react";
+import { RecordingControls } from "./RecordingControls";
 import { ScreenRecorder } from "./ScreenRecorder";
-import { Dispatch, SetStateAction } from "react";
 
 interface CameraControlsProps {
   onToggleSidebar: () => void;
   onSaveBoard: () => void;
   isRecording: boolean;
-  setIsRecording: Dispatch<SetStateAction<boolean>>;
+  setIsRecording: (isRecording: boolean) => void;
   isPaused: boolean;
-  setIsPaused: Dispatch<SetStateAction<boolean>>;
+  setIsPaused: (isPaused: boolean) => void;
+  onStartRecording: () => void;
 }
 
 export const CameraControls = ({
@@ -19,17 +20,32 @@ export const CameraControls = ({
   setIsRecording,
   isPaused,
   setIsPaused,
+  onStartRecording,
 }: CameraControlsProps) => {
+  const handleRecordingClick = () => {
+    if (!isRecording) {
+      onStartRecording();
+    } else {
+      setIsRecording(false);
+    }
+  };
+
+  const handlePauseResume = () => {
+    setIsPaused(!isPaused);
+  };
+
   return (
     <div className="fixed bottom-4 right-4 z-30 flex items-center gap-2">
-      <Button
-        variant="outline"
-        size="icon"
-        onClick={onToggleSidebar}
-      >
-        <Code className="h-4 w-4" />
+      <Button variant="outline" size="icon" onClick={onToggleSidebar}>
+        <FolderKanban className="h-4 w-4" />
       </Button>
-      <ScreenRecorder />
+      <RecordingControls
+        isRecording={isRecording}
+        isPaused={isPaused}
+        onRecordingClick={handleRecordingClick}
+        onPauseResume={handlePauseResume}
+        onSaveBoard={onSaveBoard}
+      />
     </div>
   );
 };

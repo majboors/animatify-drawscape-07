@@ -1,36 +1,16 @@
 import { useState, useEffect } from "react";
-import { Video, Trash2, Play, Code } from "lucide-react";
+import { Video, Trash2, Play, FolderKanban } from "lucide-react";
 import { Button } from "./ui/button";
 import { toast } from "sonner";
 import { loadBoardStates } from "@/utils/boardState";
 import { supabase } from "@/integrations/supabase/client";
+import { ProjectList } from "./project/ProjectList";
 import {
   Sheet,
   SheetContent,
   SheetHeader,
   SheetTitle,
 } from "./ui/sheet";
-
-interface Project {
-  id: string;
-  name: string;
-  created_at: string;
-}
-
-interface Recording {
-  id: string;
-  name: string;
-  created_at: string;
-  project_id: string;
-  video_data: string | null;
-}
-
-interface BoardState {
-  id: string;
-  recording_id: string;
-  board_data: any;
-  created_at: string;
-}
 
 interface VideoSidebarProps {
   isOpen: boolean;
@@ -45,48 +25,20 @@ export const VideoSidebar = ({
   currentRecordingId,
   setCurrentRecordingId,
 }: VideoSidebarProps) => {
-  const [projects, setProjects] = useState<Project[]>([]);
-  const [selectedProject, setSelectedProject] = useState<Project | null>(null);
-  const [recordings, setRecordings] = useState<Recording[]>([]);
-  const [boardStates, setBoardStates] = useState<BoardState[]>([]);
+  const [selectedProject, setSelectedProject] = useState<string | null>(null);
+  const [recordings, setRecordings] = useState<Array<{
+    id: string;
+    name: string;
+    created_at: string;
+  }>>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [videoUrl, setVideoUrl] = useState<string | null>(null);
 
   useEffect(() => {
-    loadProjects();
-  }, []);
-
-  useEffect(() => {
     if (selectedProject) {
-      loadRecordings(selectedProject.id);
+      loadRecordings(selectedProject);
     }
   }, [selectedProject]);
-
-  const loadProjects = async () => {
-    try {
-      setIsLoading(true);
-      const { data, error } = await supabase
-        .from('projects')
-        .select('*')
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
-      
-      if (data && data.length > 0) {
-        console.log("Projects loaded:", data);
-        setProjects(data);
-        setSelectedProject(data[0]); // Auto-select first project
-      } else {
-        setProjects([]);
-        setSelectedProject(null);
-      }
-    } catch (error) {
-      console.error('Error loading projects:', error);
-      toast.error("Failed to load projects");
-    } finally {
-      setIsLoading(false);
-    }
-  };
 
   const loadRecordings = async (projectId: string) => {
     try {
@@ -100,14 +52,11 @@ export const VideoSidebar = ({
 
       if (error) throw error;
 
-      if (data && data.length > 0) {
+      if (data) {
         console.log("Recordings loaded:", data);
         setRecordings(data);
-        // Load board states for the first recording
-        await loadBoardStatesForRecording(data[0].id);
       } else {
         setRecordings([]);
-        setBoardStates([]);
       }
     } catch (error) {
       console.error('Error loading recordings:', error);
@@ -127,9 +76,8 @@ export const VideoSidebar = ({
 
       if (error) throw error;
 
-      // Refresh recordings list
       if (selectedProject) {
-        await loadRecordings(selectedProject.id);
+        await loadRecordings(selectedProject);
       }
       toast.success("Recording deleted");
     } catch (error) {
@@ -140,26 +88,9 @@ export const VideoSidebar = ({
     }
   };
 
-  const loadBoardStatesForRecording = async (recordingId: string) => {
-    try {
-      setIsLoading(true);
-      console.log("Loading board states for recording:", recordingId);
-      const states = await loadBoardStates(recordingId);
-      console.log("Board states loaded:", states);
-      setBoardStates(states);
-      setCurrentRecordingId(recordingId);
-    } catch (error) {
-      console.error('Error loading board states:', error);
-      toast.error("Failed to load board states");
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
   const playRecording = async (recordingId: string) => {
     try {
       setIsLoading(true);
-      console.log("Playing recording:", recordingId);
       const { data, error } = await supabase
         .from('recordings')
         .select('video_data')
@@ -186,31 +117,18 @@ export const VideoSidebar = ({
       <SheetContent side="left" className="w-[400px] sm:w-[540px]">
         <SheetHeader>
           <SheetTitle className="flex items-center gap-2">
-            <Code className="h-5 w-5" />
+            <FolderKanban className="h-5 w-5" />
             Projects & Recordings
           </SheetTitle>
         </SheetHeader>
         
         <div className="mt-4 space-y-4">
-          {/* Projects List */}
-          <div className="space-y-2">
-            <h3 className="font-medium">Projects</h3>
-            <div className="space-y-1">
-              {projects.map((project) => (
-                <Button
-                  key={project.id}
-                  variant={selectedProject?.id === project.id ? "secondary" : "ghost"}
-                  className="w-full justify-start"
-                  onClick={() => setSelectedProject(project)}
-                >
-                  {project.name}
-                </Button>
-              ))}
-            </div>
-          </div>
+          <ProjectList
+            selectedProject={selectedProject}
+            onSelectProject={setSelectedProject}
+          />
 
-          {/* Recordings List */}
-          {selectedProject && (
+          {selectedProject && recordings.length > 0 && (
             <div className="space-y-2">
               <h3 className="font-medium">Recordings</h3>
               <div className="space-y-1">
@@ -245,7 +163,6 @@ export const VideoSidebar = ({
             </div>
           )}
 
-          {/* Video Player */}
           {videoUrl && (
             <div className="mt-4">
               <video
