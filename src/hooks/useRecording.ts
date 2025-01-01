@@ -1,5 +1,6 @@
 import { useState, useCallback } from "react";
 import { startScreenRecording, saveRecordingToDatabase } from "@/utils/recordingUtils";
+import { toast } from "sonner";
 
 interface UseRecordingProps {
   isRecording: boolean;
@@ -23,48 +24,64 @@ export const useRecording = ({
   const [previewStream, setPreviewStream] = useState<MediaStream | null>(null);
 
   const startRecording = useCallback(async () => {
-    const stream = await startScreenRecording();
-    if (!stream) return;
-
-    setPreviewStream(stream);
-    const recorder = new MediaRecorder(stream, {
-      mimeType: 'video/webm;codecs=vp9'
-    });
-    
-    recorder.ondataavailable = (event) => {
-      if (event.data.size > 0) {
-        setRecordedChunks(prev => [...prev, event.data]);
+    try {
+      const stream = await startScreenRecording();
+      if (!stream) {
+        throw new Error("Failed to get media stream");
       }
-    };
 
-    recorder.onstart = () => {
-      setIsRecording(true);
-    };
+      setPreviewStream(stream);
+      const recorder = new MediaRecorder(stream, {
+        mimeType: 'video/webm;codecs=vp9'
+      });
+      
+      recorder.ondataavailable = (event) => {
+        if (event.data.size > 0) {
+          setRecordedChunks(prev => [...prev, event.data]);
+        }
+      };
 
-    recorder.onstop = async () => {
-      if (currentProjectId) {
-        const blob = new Blob(recordedChunks, { type: "video/webm" });
-        const reader = new FileReader();
-        
-        reader.onloadend = async () => {
-          const base64data = (reader.result as string).split(',')[1];
-          await saveRecordingToDatabase(
-            currentProjectId,
-            `Recording ${new Date().toISOString()}`,
-            base64data
-          );
-          setRecordedChunks([]);
-        };
+      recorder.onstart = () => {
+        setIsRecording(true);
+        toast.success("Recording started");
+      };
 
-        reader.readAsDataURL(blob);
-      }
-    };
+      recorder.onstop = async () => {
+        if (currentProjectId && recordedChunks.length > 0) {
+          const blob = new Blob(recordedChunks, { type: "video/webm" });
+          const reader = new FileReader();
+          
+          reader.onloadend = async () => {
+            const base64data = (reader.result as string).split(',')[1];
+            await saveRecordingToDatabase(
+              currentProjectId,
+              `Recording ${new Date().toISOString()}`,
+              base64data
+            );
+            setRecordedChunks([]);
+          };
 
-    recorder.onpause = () => setIsPaused(true);
-    recorder.onresume = () => setIsPaused(false);
+          reader.readAsDataURL(blob);
+        }
+      };
 
-    setMediaRecorder(recorder);
-    recorder.start(1000);
+      recorder.onpause = () => {
+        setIsPaused(true);
+        toast.info("Recording paused");
+      };
+      
+      recorder.onresume = () => {
+        setIsPaused(false);
+        toast.info("Recording resumed");
+      };
+
+      setMediaRecorder(recorder);
+      recorder.start(1000);
+    } catch (error) {
+      console.error('Error in startRecording:', error);
+      toast.error("Failed to start recording. Please try again.");
+      throw error; // Re-throw to handle in useProjectDialog
+    }
   }, [currentProjectId, recordedChunks, setIsRecording, setIsPaused]);
 
   const handleRecordingClick = () => {
@@ -72,7 +89,9 @@ export const useRecording = ({
       if (!currentProjectId) {
         setShowProjectDialog(true);
       } else {
-        startRecording();
+        startRecording().catch(error => {
+          console.error('Error in handleRecordingClick:', error);
+        });
       }
     } else {
       if (mediaRecorder && mediaRecorder.state !== 'inactive') {
@@ -82,6 +101,7 @@ export const useRecording = ({
         setIsRecording(false);
         setIsPaused(false);
         setPreviewStream(null);
+        toast.success("Recording stopped");
       }
     }
   };

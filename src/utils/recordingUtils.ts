@@ -28,16 +28,28 @@ export const startScreenRecording = async () => {
     console.log("Requesting screen and audio permissions...");
     
     const screenStream = await navigator.mediaDevices.getDisplayMedia({ 
-      video: { displaySurface: "browser" },
+      video: { 
+        displaySurface: "browser",
+        width: { ideal: 1920 },
+        height: { ideal: 1080 },
+        frameRate: { ideal: 30 }
+      },
       audio: true 
     });
 
-    const micStream = await navigator.mediaDevices.getUserMedia({ 
-      audio: {
-        echoCancellation: true,
-        noiseSuppression: true,
-      }
-    });
+    let micStream;
+    try {
+      micStream = await navigator.mediaDevices.getUserMedia({ 
+        audio: {
+          echoCancellation: true,
+          noiseSuppression: true,
+        }
+      });
+    } catch (micError) {
+      console.warn('Microphone access denied:', micError);
+      toast.warning("Microphone access denied. Recording without audio.");
+      return screenStream;
+    }
 
     const combinedStream = new MediaStream([
       ...screenStream.getVideoTracks(),

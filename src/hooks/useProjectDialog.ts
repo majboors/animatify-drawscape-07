@@ -31,9 +31,15 @@ export const useProjectDialog = ({
       if (error) throw error;
 
       setCurrentProjectId(data.id);
-      await startRecording();
-      setProjectName("");
-      toast.success("Project created successfully");
+      // We'll start recording after project creation is confirmed
+      try {
+        await startRecording();
+        setProjectName("");
+        toast.success("Project created and recording started");
+      } catch (recordingError) {
+        console.error('Error starting recording:', recordingError);
+        toast.error("Project created but failed to start recording");
+      }
     } catch (error) {
       console.error('Error creating project:', error);
       toast.error("Failed to create project");
