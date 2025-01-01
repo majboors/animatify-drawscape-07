@@ -30,13 +30,13 @@ export const RecordingPreviewDialog = ({
     try {
       console.log("Starting video upload process...");
       const timestamp = Date.now();
-      const filePath = `recording-${timestamp}.webm`;
+      const filePath = `recording-${timestamp}.mp4`;
 
       console.log("Uploading video to storage bucket...");
       const { data: uploadData, error: uploadError } = await supabase.storage
         .from('videos')
         .upload(filePath, videoBlob, {
-          contentType: 'video/webm',
+          contentType: 'video/mp4',
           cacheControl: '3600'
         });
 
@@ -45,7 +45,6 @@ export const RecordingPreviewDialog = ({
         throw uploadError;
       }
 
-      // Get the public URL directly from storage
       const { data: { publicUrl } } = supabase.storage
         .from('videos')
         .getPublicUrl(filePath);

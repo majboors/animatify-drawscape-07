@@ -41,7 +41,7 @@ export const ScreenRecorder = forwardRef((props, ref) => {
         streamRef.current = combinedStream;
         
         const mediaRecorder = new MediaRecorder(combinedStream, {
-          mimeType: 'video/webm;codecs=vp8,opus'
+          mimeType: 'video/mp4'
         });
         
         mediaRecorderRef.current = mediaRecorder;
@@ -56,7 +56,7 @@ export const ScreenRecorder = forwardRef((props, ref) => {
 
         mediaRecorder.onstop = async () => {
           console.log("Recording stopped, processing...");
-          const blob = new Blob(chunksRef.current, { type: 'video/webm' });
+          const blob = new Blob(chunksRef.current, { type: 'video/mp4' });
           setVideoBlob(blob);
           setShowPreview(true);
 

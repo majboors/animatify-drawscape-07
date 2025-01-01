@@ -6,6 +6,7 @@ import { useState, useRef } from "react";
 import { ScreenRecorder } from "./ScreenRecorder";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "./ui/alert-dialog";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "./ui/dialog";
+import { supabase } from "@/integrations/supabase/client";
 
 interface RecordingControlsProps {
   isRecording: boolean;
@@ -34,7 +35,7 @@ export const RecordingControls = ({
     }
   };
 
-  const handleProjectCreated = (projectId: string) => {
+  const handleProjectCreated = async (projectId: string) => {
     setShowProjectDialog(false);
     console.log("[RecordingControls] Project selected, starting recording with ID:", projectId);
     if (screenRecorderRef.current) {
