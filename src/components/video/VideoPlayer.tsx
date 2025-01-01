@@ -41,9 +41,16 @@ export const VideoPlayer = ({ recordingId, onPlay, onDelete }: VideoPlayerProps)
       }
 
       if (data) {
-        // Ensure we're using the direct video URL
-        setRecording(data);
-        console.log("Recording loaded:", data);
+        // Convert hex-encoded URL to actual URL if needed
+        const cleanedData = {
+          ...data,
+          video_data: data.video_data?.startsWith('\\x') 
+            ? decodeURIComponent(data.video_data.replace('\\x', ''))
+            : data.video_data
+        };
+        
+        setRecording(cleanedData);
+        console.log("Recording loaded:", cleanedData);
       }
     } catch (error) {
       console.error("Error in fetchRecording:", error);
