@@ -1,5 +1,5 @@
 import { Button } from "./ui/button";
-import { Video, Play, Pause, Save } from "lucide-react";
+import { Video, Play, Pause, Save, Square } from "lucide-react";
 import { toast } from "sonner";
 import { ProjectDialog } from "./ProjectDialog";
 import { useState, useRef } from "react";
@@ -52,14 +52,14 @@ export const RecordingControls = ({
   };
 
   return (
-    <>
+    <div className="flex gap-2">
       <Button
         variant="outline"
         size="icon"
         onClick={handleRecordClick}
         className={isRecording ? "bg-red-500 text-white hover:bg-red-600" : ""}
       >
-        <Video className="h-4 w-4" />
+        {isRecording ? <Square className="h-4 w-4" /> : <Video className="h-4 w-4" />}
       </Button>
       {isRecording && (
         <>
@@ -91,6 +91,6 @@ export const RecordingControls = ({
         onOpenChange={setShowProjectDialog}
         onProjectCreated={handleProjectCreated}
       />
-    </>
+    </div>
   );
 };
