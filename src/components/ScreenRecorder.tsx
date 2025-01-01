@@ -21,7 +21,18 @@ export const ScreenRecorder = () => {
   const startRecording = async () => {
     try {
       console.log("Starting recording setup...");
-      const audioStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      
+      // Get microphone audio stream
+      const micStream = await navigator.mediaDevices.getUserMedia({ 
+        audio: {
+          echoCancellation: true,
+          noiseSuppression: true,
+          autoGainControl: true
+        }
+      });
+      console.log("Microphone stream acquired");
+
+      // Get screen capture with system audio
       const displayStream = await navigator.mediaDevices.getDisplayMedia({
         video: { 
           width: { ideal: 1920 },
@@ -29,9 +40,17 @@ export const ScreenRecorder = () => {
         },
         audio: true
       });
+      console.log("Screen capture stream acquired");
 
-      const tracks = [...displayStream.getTracks(), ...audioStream.getAudioTracks()];
-      const combinedStream = new MediaStream(tracks);
+      // Combine all audio tracks and video track
+      const videoTrack = displayStream.getVideoTracks()[0];
+      const audioTracks = [
+        ...displayStream.getAudioTracks(),  // System audio
+        ...micStream.getAudioTracks()       // Microphone audio
+      ];
+      
+      const combinedStream = new MediaStream([videoTrack, ...audioTracks]);
+      console.log(`Combined stream created with ${audioTracks.length} audio tracks`);
       
       const mediaRecorder = new MediaRecorder(combinedStream, {
         mimeType: 'video/webm;codecs=vp8,opus'
@@ -52,8 +71,11 @@ export const ScreenRecorder = () => {
         const blob = new Blob(chunksRef.current, { type: 'video/webm' });
         await uploadToSupabase(blob);
         
-        // Cleanup
-        tracks.forEach(track => track.stop());
+        // Cleanup streams
+        [videoTrack, ...audioTracks].forEach(track => {
+          track.stop();
+          console.log(`Stopped track: ${track.kind}`);
+        });
       };
 
       mediaRecorder.start(1000); // Collect data every second
