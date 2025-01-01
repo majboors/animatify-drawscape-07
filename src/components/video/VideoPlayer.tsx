@@ -23,6 +23,24 @@ export const VideoPlayer = ({ recordingId, onPlay, onDelete }: VideoPlayerProps)
     fetchRecording();
   }, [recordingId]);
 
+  const decodeHexUrl = (hexUrl: string | null): string => {
+    if (!hexUrl) return '';
+    
+    // Check if the URL is hex-encoded (starts with blob: or \x)
+    if (hexUrl.startsWith('blob:') || hexUrl.startsWith('\\x')) {
+      try {
+        // Remove the hex prefix and decode
+        const cleanUrl = hexUrl.replace(/^(blob:|\\x)/, '');
+        return decodeURIComponent(cleanUrl);
+      } catch (error) {
+        console.error("Error decoding URL:", error);
+        return hexUrl; // Return original if decoding fails
+      }
+    }
+    
+    return hexUrl; // Return as-is if not hex-encoded
+  };
+
   const fetchRecording = async () => {
     try {
       setIsLoading(true);
@@ -41,12 +59,9 @@ export const VideoPlayer = ({ recordingId, onPlay, onDelete }: VideoPlayerProps)
       }
 
       if (data) {
-        // Convert hex-encoded URL to actual URL if needed
         const cleanedData = {
           ...data,
-          video_data: data.video_data?.startsWith('\\x') 
-            ? decodeURIComponent(data.video_data.replace('\\x', ''))
-            : data.video_data
+          video_data: decodeHexUrl(data.video_data)
         };
         
         setRecording(cleanedData);
