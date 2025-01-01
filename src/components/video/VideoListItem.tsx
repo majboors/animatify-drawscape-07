@@ -1,4 +1,4 @@
-import { VideoPlayer } from "./VideoPlayer";
+import { VideoUrlFetcher } from "./VideoUrlFetcher";
 
 interface VideoListItemProps {
   recording: {
@@ -13,7 +13,7 @@ interface VideoListItemProps {
 
 export const VideoListItem = ({ recording, onPlay, onDelete }: VideoListItemProps) => {
   return (
-    <VideoPlayer
+    <VideoUrlFetcher
       recordingId={recording.id}
       onPlay={onPlay}
       onDelete={onDelete}
