@@ -33,7 +33,11 @@ export const NewSidebar = () => {
       <Sheet open={isOpen} onOpenChange={setIsOpen}>
         <SheetContent 
           side="right" 
-          className={`p-0 ${isFullscreen ? 'w-screen h-screen' : 'w-[400px] sm:w-[540px]'}`}
+          className={`p-0 transition-all duration-300 ease-in-out ${
+            isFullscreen 
+              ? 'w-screen h-screen !max-w-none !translate-x-0' 
+              : 'w-[400px] sm:w-[540px]'
+          }`}
         >
           <NewSidebarHeader 
             onClose={() => setIsOpen(false)} 
