@@ -35,7 +35,7 @@ export const CameraControls = ({
   };
 
   return (
-    <div className="fixed bottom-4 right-4 z-30 flex items-center gap-2">
+    <div className="fixed bottom-4 right-4 z-30 flex items-center gap-2 bg-white/80 backdrop-blur-sm p-2 rounded-lg shadow-lg">
       <Button variant="outline" size="icon" onClick={onToggleSidebar}>
         <FolderKanban className="h-4 w-4" />
       </Button>

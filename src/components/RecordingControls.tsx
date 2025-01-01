@@ -80,7 +80,7 @@ export const RecordingControls = ({
     <>
       <div className="flex items-center gap-2">
         <Button
-          variant="outline"
+          variant={isRecording ? "destructive" : "outline"}
           size="icon"
           onClick={handleRecordClick}
           className={isRecording ? "bg-red-500 text-white hover:bg-red-600" : ""}
