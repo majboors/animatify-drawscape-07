@@ -17,6 +17,7 @@ export interface CanvasRef {
   group: () => void;
   ungroup: () => void;
   getFabricCanvas: () => ExtendedCanvas | null;
+  toJSON: () => any; // Add the missing toJSON method
 }
 
 export const Canvas = forwardRef<CanvasRef, CanvasProps>(({ activeTool, activeColor, activeFont }, ref) => {
@@ -102,7 +103,8 @@ export const Canvas = forwardRef<CanvasRef, CanvasProps>(({ activeTool, activeCo
     },
     group: handleGroup,
     ungroup: handleUngroup,
-    getFabricCanvas: () => fabricCanvas
+    getFabricCanvas: () => fabricCanvas,
+    toJSON: () => fabricCanvas?.toJSON() // Implement the toJSON method
   }));
 
   useEffect(() => {

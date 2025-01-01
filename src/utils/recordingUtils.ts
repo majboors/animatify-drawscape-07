@@ -1,6 +1,25 @@
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 
+export const requestScreenShare = async () => {
+  try {
+    const stream = await navigator.mediaDevices.getDisplayMedia({
+      video: {
+        width: { ideal: 1920 },
+        height: { ideal: 1080 },
+        frameRate: { ideal: 30 }
+      },
+      audio: true
+    });
+    return stream;
+  } catch (error: any) {
+    if (error.name === 'NotAllowedError') {
+      throw new Error("Please allow screen sharing to start recording");
+    }
+    throw error;
+  }
+};
+
 export const saveRecordingToDatabase = async (
   projectId: string,
   recordingName: string,
