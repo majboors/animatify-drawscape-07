@@ -28,7 +28,7 @@ export const ProjectDialog = ({
   const [projectName, setProjectName] = useState("");
   const [projects, setProjects] = useState<Array<{ id: string; name: string }>>([]);
   const [selectedProject, setSelectedProject] = useState<string | null>(null);
-  const [showProjectSelect, setShowProjectSelect] = useState(false);
+  const [mode, setMode] = useState<"select" | "create">("select");
 
   useEffect(() => {
     if (isOpen) {
@@ -51,7 +51,7 @@ export const ProjectDialog = ({
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleCreateProject = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!projectName.trim()) {
@@ -70,10 +70,9 @@ export const ProjectDialog = ({
 
       if (data) {
         setProjectName("");
-        setSelectedProject(data.id);
-        await loadProjects();
-        setShowProjectSelect(true);
+        onProjectCreated(data.id);
         toast.success("Project created successfully");
+        onOpenChange(false);
       }
     } catch (error) {
       console.error('Error creating project:', error);
@@ -87,44 +86,21 @@ export const ProjectDialog = ({
       return;
     }
     onProjectCreated(selectedProject);
-    setShowProjectSelect(false);
     onOpenChange(false);
   };
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent>
-        {!showProjectSelect ? (
-          <form onSubmit={handleSubmit}>
-            <DialogHeader>
-              <DialogTitle>Create New Project</DialogTitle>
-              <DialogDescription>
-                Enter a name for your new project. This will help organize your recordings.
-              </DialogDescription>
-            </DialogHeader>
-            <div className="grid gap-4 py-4">
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Input
-                  id="projectName"
-                  placeholder="Project name"
-                  className="col-span-4"
-                  value={projectName}
-                  onChange={(e) => setProjectName(e.target.value)}
-                />
-              </div>
-            </div>
-            <DialogFooter>
-              <Button type="submit">Create Project</Button>
-            </DialogFooter>
-          </form>
-        ) : (
-          <div>
-            <DialogHeader>
-              <DialogTitle>Select Project</DialogTitle>
-              <DialogDescription>
-                Choose a project for your recording or create a new one.
-              </DialogDescription>
-            </DialogHeader>
+        <DialogHeader>
+          <DialogTitle>Project Selection</DialogTitle>
+          <DialogDescription>
+            Choose an existing project or create a new one for your recording.
+          </DialogDescription>
+        </DialogHeader>
+
+        {mode === "select" ? (
+          <div className="space-y-4">
             <div className="py-4">
               <RadioGroup
                 value={selectedProject || ""}
@@ -142,7 +118,7 @@ export const ProjectDialog = ({
             <DialogFooter className="flex justify-between">
               <Button
                 variant="outline"
-                onClick={() => setShowProjectSelect(false)}
+                onClick={() => setMode("create")}
               >
                 Create New Project
               </Button>
@@ -151,6 +127,30 @@ export const ProjectDialog = ({
               </Button>
             </DialogFooter>
           </div>
+        ) : (
+          <form onSubmit={handleCreateProject}>
+            <div className="grid gap-4 py-4">
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Input
+                  id="projectName"
+                  placeholder="Project name"
+                  className="col-span-4"
+                  value={projectName}
+                  onChange={(e) => setProjectName(e.target.value)}
+                />
+              </div>
+            </div>
+            <DialogFooter className="flex justify-between">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setMode("select")}
+              >
+                Back to Projects
+              </Button>
+              <Button type="submit">Create Project</Button>
+            </DialogFooter>
+          </form>
         )}
       </DialogContent>
     </Dialog>
