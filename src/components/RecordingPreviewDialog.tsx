@@ -45,11 +45,29 @@ export const RecordingPreviewDialog = ({
         throw uploadError;
       }
 
+      // Get the direct public URL for the video
       const { data: { publicUrl } } = supabase.storage
         .from('videos')
         .getPublicUrl(filePath);
 
       console.log("Video uploaded successfully, public URL:", publicUrl);
+
+      // Save recording metadata to database
+      const { data: recordingData, error: dbError } = await supabase
+        .from('recordings')
+        .insert({
+          name: `Recording ${new Date().toLocaleString()}`,
+          video_data: publicUrl,
+          project_id: null // You might want to set this based on your app's context
+        })
+        .select()
+        .single();
+
+      if (dbError) {
+        console.error("Database error:", dbError);
+        throw dbError;
+      }
+
       setVideoUrl(publicUrl);
       toast.success("Recording saved successfully");
     } catch (error) {
