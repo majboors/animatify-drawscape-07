@@ -48,17 +48,24 @@ export const useRecording = ({
 
       recorder.onstop = async () => {
         if (currentProjectId && recordedChunks.length > 0) {
-          const blob = new Blob(recordedChunks, { type: "video/webm" });
+          const blob = new Blob(recordedChunks, { type: "video/mp4" });
           const reader = new FileReader();
           
           reader.onloadend = async () => {
-            const base64data = (reader.result as string).split(',')[1];
-            await saveRecordingToDatabase(
-              currentProjectId,
-              `Recording ${new Date().toISOString()}`,
-              base64data
-            );
-            setRecordedChunks([]);
+            if (reader.result && typeof reader.result === 'string') {
+              console.log("Converting recording to base64...");
+              try {
+                const result = await saveRecordingToDatabase(
+                  currentProjectId,
+                  `Recording ${new Date().toISOString()}`,
+                  reader.result
+                );
+                console.log("Recording saved successfully:", result);
+              } catch (error) {
+                console.error("Error saving recording:", error);
+                toast.error("Failed to save recording");
+              }
+            }
           };
 
           reader.readAsDataURL(blob);
@@ -80,7 +87,7 @@ export const useRecording = ({
     } catch (error) {
       console.error('Error in startRecording:', error);
       toast.error("Failed to start recording. Please try again.");
-      throw error; // Re-throw to handle in useProjectDialog
+      throw error;
     }
   }, [currentProjectId, recordedChunks, setIsRecording, setIsPaused]);
 
@@ -117,6 +124,32 @@ export const useRecording = ({
   };
 
   const handleSaveBoardClick = async () => {
+    if (mediaRecorder && mediaRecorder.state === 'recording') {
+      mediaRecorder.stop(); // This will trigger the onstop event which saves the recording
+    } else if (recordedChunks.length > 0) {
+      const blob = new Blob(recordedChunks, { type: "video/mp4" });
+      const reader = new FileReader();
+      
+      reader.onloadend = async () => {
+        if (reader.result && typeof reader.result === 'string' && currentProjectId) {
+          console.log("Converting recording to base64...");
+          try {
+            const result = await saveRecordingToDatabase(
+              currentProjectId,
+              `Recording ${new Date().toISOString()}`,
+              reader.result
+            );
+            console.log("Recording saved successfully:", result);
+            setRecordedChunks([]); // Clear the chunks after successful save
+          } catch (error) {
+            console.error("Error saving recording:", error);
+            toast.error("Failed to save recording");
+          }
+        }
+      };
+
+      reader.readAsDataURL(blob);
+    }
     await onSaveBoard();
   };
 
