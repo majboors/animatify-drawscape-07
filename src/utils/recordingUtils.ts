@@ -7,55 +7,102 @@ export const saveRecordingToDatabase = async (
   videoData: string
 ) => {
   try {
+    console.log("Starting video upload process...");
+    
     // Convert base64 to blob
-    const base64Data = atob(videoData);
-    const arrayBuffer = new ArrayBuffer(base64Data.length);
-    const uint8Array = new Uint8Array(arrayBuffer);
-    for (let i = 0; i < base64Data.length; i++) {
-      uint8Array[i] = base64Data.charCodeAt(i);
+    const base64Data = videoData.split(',')[1]; // Remove data URL prefix if present
+    const byteCharacters = atob(base64Data);
+    const byteArrays = [];
+    
+    for (let offset = 0; offset < byteCharacters.length; offset += 512) {
+      const slice = byteCharacters.slice(offset, offset + 512);
+      const byteNumbers = new Array(slice.length);
+      for (let i = 0; i < slice.length; i++) {
+        byteNumbers[i] = slice.charCodeAt(i);
+      }
+      const byteArray = new Uint8Array(byteNumbers);
+      byteArrays.push(byteArray);
     }
-    const blob = new Blob([uint8Array], { type: 'video/webm' });
+    
+    const blob = new Blob(byteArrays, { type: 'video/mp4' });
+    console.log("Blob created:", blob.size, "bytes");
 
-    // Upload to storage
-    const fileName = `${Date.now()}-${recordingName}.webm`;
-    const { data: storageData, error: storageError } = await supabase.storage
+    // Generate unique filename
+    const fileName = `${Date.now()}-${recordingName}.mp4`;
+    console.log("Uploading file:", fileName);
+
+    // Upload to storage bucket
+    const { data: uploadData, error: uploadError } = await supabase.storage
       .from('videos')
-      .upload(fileName, blob);
+      .upload(fileName, blob, {
+        cacheControl: '3600',
+        upsert: false
+      });
 
-    if (storageError) {
-      console.error('Storage error:', storageError);
-      throw storageError;
+    if (uploadError) {
+      console.error('Storage upload error:', uploadError);
+      throw uploadError;
     }
+
+    console.log("Upload successful:", uploadData);
 
     // Get public URL
-    const { data: publicUrlData } = supabase.storage
+    const { data: urlData } = supabase.storage
       .from('videos')
       .getPublicUrl(fileName);
 
-    console.log('Video uploaded successfully. Public URL:', publicUrlData.publicUrl);
+    const publicUrl = urlData.publicUrl;
+    console.log('Video public URL:', publicUrl);
 
-    // Save recording reference to database
-    const { data, error } = await supabase
+    // Save recording reference in database
+    const { data: recordingData, error: dbError } = await supabase
       .from('recordings')
       .insert({
         project_id: projectId,
         name: recordingName,
-        video_data: publicUrlData.publicUrl
+        video_data: publicUrl
       })
       .select()
       .single();
 
-    if (error) {
-      console.error('Database error:', error);
-      throw error;
+    if (dbError) {
+      console.error('Database error:', dbError);
+      throw dbError;
     }
 
-    console.log('Recording saved to database:', data);
+    console.log('Recording saved in database:', recordingData);
     toast.success("Recording saved successfully!");
-    return data;
+    return recordingData;
   } catch (error) {
     console.error('Error in saveRecordingToDatabase:', error);
     toast.error("Failed to save recording");
+    throw error;
+  }
+};
+
+export const startScreenRecording = async () => {
+  try {
+    console.log("Starting screen recording...");
+    const screenStream = await requestScreenShare();
+    if (!screenStream) {
+      throw new Error("Failed to get screen access");
+    }
+
+    const micStream = await requestMicrophoneAccess();
+    if (!micStream) {
+      console.log("Recording without audio - microphone access denied");
+      return screenStream;
+    }
+
+    const tracks = [
+      ...screenStream.getVideoTracks(),
+      ...micStream.getAudioTracks()
+    ];
+
+    console.log("Screen recording started successfully");
+    return new MediaStream(tracks);
+  } catch (error: any) {
+    console.error('Error starting recording:', error);
     throw error;
   }
 };
@@ -96,32 +143,5 @@ export const requestMicrophoneAccess = async () => {
   } catch (error) {
     console.warn('Microphone access denied:', error);
     return null;
-  }
-};
-
-export const startScreenRecording = async () => {
-  try {
-    console.log("Starting screen recording...");
-    const screenStream = await requestScreenShare();
-    if (!screenStream) {
-      throw new Error("Failed to get screen access");
-    }
-
-    const micStream = await requestMicrophoneAccess();
-    if (!micStream) {
-      console.log("Recording without audio - microphone access denied");
-      return screenStream;
-    }
-
-    const tracks = [
-      ...screenStream.getVideoTracks(),
-      ...micStream.getAudioTracks()
-    ];
-
-    console.log("Screen recording started successfully");
-    return new MediaStream(tracks);
-  } catch (error: any) {
-    console.error('Error starting recording:', error);
-    throw error;
   }
 };
