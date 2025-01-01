@@ -1,16 +1,13 @@
 import { useState, useRef, forwardRef, useImperativeHandle } from 'react';
 import { toast } from "sonner";
 import { startScreenRecording } from "@/utils/mediaUtils";
-import { RecordingPreview } from "./RecordingPreview";
-import { supabase } from "@/integrations/supabase/client";
-import { ProjectDialog } from "./ProjectDialog";
+import { RecordingPreviewDialog } from "./RecordingPreviewDialog";
 
 export const ScreenRecorder = forwardRef((props, ref) => {
   const [isRecording, setIsRecording] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
-  const [showProjectDialog, setShowProjectDialog] = useState(false);
   const [videoUrl, setVideoUrl] = useState<string | null>(null);
-  const [pendingBlob, setPendingBlob] = useState<Blob | null>(null);
+  const [videoBlob, setVideoBlob] = useState<Blob | null>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
   const streamRef = useRef<MediaStream | null>(null);
@@ -39,8 +36,10 @@ export const ScreenRecorder = forwardRef((props, ref) => {
         mediaRecorder.onstop = async () => {
           console.log("Recording stopped, processing...");
           const blob = new Blob(chunksRef.current, { type: 'video/webm' });
-          setPendingBlob(blob);
-          setShowProjectDialog(true);
+          const url = URL.createObjectURL(blob);
+          setVideoUrl(url);
+          setVideoBlob(blob);
+          setShowPreview(true);
 
           // Cleanup streams
           if (streamRef.current) {
@@ -80,63 +79,13 @@ export const ScreenRecorder = forwardRef((props, ref) => {
     }
   }));
 
-  const handleProjectCreated = async (projectId: string) => {
-    if (!pendingBlob) {
-      toast.error("No recording data available");
-      return;
-    }
-
-    try {
-      const filename = `recording-${Date.now()}.webm`;
-      const { error: uploadError } = await supabase.storage
-        .from('videos')
-        .upload(filename, pendingBlob, {
-          contentType: 'video/webm',
-          cacheControl: '3600'
-        });
-
-      if (uploadError) throw uploadError;
-
-      const { data: { publicUrl } } = supabase.storage
-        .from('videos')
-        .getPublicUrl(filename);
-
-      console.log("Upload successful, public URL:", publicUrl);
-
-      const { error: dbError } = await supabase
-        .from('recordings')
-        .insert([{
-          project_id: projectId,
-          name: `Recording ${new Date().toLocaleString()}`,
-          video_data: publicUrl
-        }]);
-
-      if (dbError) throw dbError;
-
-      setVideoUrl(publicUrl);
-      setShowPreview(true);
-      setPendingBlob(null);
-      setShowProjectDialog(false);
-      toast.success("Recording saved successfully");
-    } catch (error) {
-      console.error("Upload error:", error);
-      toast.error("Failed to save recording");
-    }
-  };
-
   return (
-    <>
-      <RecordingPreview
-        open={showPreview}
-        onOpenChange={setShowPreview}
-        videoUrl={videoUrl}
-      />
-      <ProjectDialog
-        isOpen={showProjectDialog}
-        onOpenChange={setShowProjectDialog}
-        onProjectCreated={handleProjectCreated}
-      />
-    </>
+    <RecordingPreviewDialog
+      isOpen={showPreview}
+      onOpenChange={setShowPreview}
+      videoUrl={videoUrl}
+      videoBlob={videoBlob}
+    />
   );
 });
 

@@ -3,29 +3,82 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogFooter,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Copy } from "lucide-react";
+import { Copy, Save } from "lucide-react";
 import { toast } from "sonner";
+import { ProjectDialog } from "./ProjectDialog";
+import { useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
 
 interface RecordingPreviewDialogProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
   videoUrl: string | null;
+  videoBlob: Blob | null;
 }
 
 export const RecordingPreviewDialog = ({
   isOpen,
   onOpenChange,
   videoUrl,
+  videoBlob,
 }: RecordingPreviewDialogProps) => {
+  const [showProjectDialog, setShowProjectDialog] = useState(false);
+
   const handleCopyUrl = () => {
     if (videoUrl) {
-      // Ensure URL is decoded before copying
       const decodedUrl = decodeURIComponent(videoUrl);
       navigator.clipboard.writeText(decodedUrl);
       toast.success("URL copied to clipboard");
+    }
+  };
+
+  const handleSaveRecording = () => {
+    setShowProjectDialog(true);
+  };
+
+  const handleProjectCreated = async (projectId: string) => {
+    if (!videoBlob) {
+      toast.error("No recording data available");
+      return;
+    }
+
+    try {
+      const filename = `recording-${Date.now()}.webm`;
+      const { error: uploadError } = await supabase.storage
+        .from('videos')
+        .upload(filename, videoBlob, {
+          contentType: 'video/webm',
+          cacheControl: '3600'
+        });
+
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('videos')
+        .getPublicUrl(filename);
+
+      console.log("Upload successful, public URL:", publicUrl);
+
+      const { error: dbError } = await supabase
+        .from('recordings')
+        .insert([{
+          project_id: projectId,
+          name: `Recording ${new Date().toLocaleString()}`,
+          video_data: publicUrl
+        }]);
+
+      if (dbError) throw dbError;
+
+      setShowProjectDialog(false);
+      onOpenChange(false);
+      toast.success("Recording saved successfully");
+    } catch (error) {
+      console.error("Upload error:", error);
+      toast.error("Failed to save recording");
     }
   };
 
@@ -42,37 +95,52 @@ export const RecordingPreviewDialog = ({
   const decodedUrl = getDecodedUrl();
 
   return (
-    <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[600px]">
-        <DialogHeader>
-          <DialogTitle>Recording Preview</DialogTitle>
-        </DialogHeader>
-        <div className="space-y-4">
-          {decodedUrl && (
-            <>
-              <video
-                src={decodedUrl}
-                controls
-                className="w-full rounded-lg border"
-              />
-              <div className="flex gap-2">
-                <Input
-                  value={decodedUrl}
-                  readOnly
-                  className="flex-1"
+    <>
+      <Dialog open={isOpen} onOpenChange={onOpenChange}>
+        <DialogContent className="sm:max-w-[600px]">
+          <DialogHeader>
+            <DialogTitle>Recording Preview</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            {decodedUrl && (
+              <>
+                <video
+                  src={decodedUrl}
+                  controls
+                  autoPlay
+                  className="w-full rounded-lg border"
                 />
-                <Button
-                  variant="outline"
-                  size="icon"
-                  onClick={handleCopyUrl}
-                >
-                  <Copy className="h-4 w-4" />
-                </Button>
-              </div>
-            </>
-          )}
-        </div>
-      </DialogContent>
-    </Dialog>
+                <div className="flex gap-2">
+                  <Input
+                    value={decodedUrl}
+                    readOnly
+                    className="flex-1"
+                  />
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    onClick={handleCopyUrl}
+                  >
+                    <Copy className="h-4 w-4" />
+                  </Button>
+                </div>
+              </>
+            )}
+          </div>
+          <DialogFooter>
+            <Button onClick={handleSaveRecording}>
+              <Save className="h-4 w-4 mr-2" />
+              Save to Project
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <ProjectDialog
+        isOpen={showProjectDialog}
+        onOpenChange={setShowProjectDialog}
+        onProjectCreated={handleProjectCreated}
+      />
+    </>
   );
 };
