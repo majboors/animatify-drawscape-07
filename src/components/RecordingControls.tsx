@@ -40,9 +40,9 @@ export const RecordingControls = ({
     console.log("[RecordingControls] Project selected, starting recording with ID:", projectId);
     if (screenRecorderRef.current) {
       screenRecorderRef.current.startRecording();
+      onRecordingClick();
       toast.success("Recording started successfully");
     }
-    onRecordingClick();
   };
 
   const handlePauseResumeClick = () => {
@@ -89,12 +89,11 @@ export const RecordingControls = ({
         </Button>
 
         {isRecording && (
-          <div className="flex items-center gap-2 animate-fade-in">
+          <div className="flex items-center gap-2 animate-fade-in bg-white/90 backdrop-blur-sm px-3 py-2 rounded-lg shadow-sm">
             <Button
               variant="outline"
               size="icon"
               onClick={handlePauseResumeClick}
-              className="bg-white/90"
             >
               {isPaused ? (
                 <Play className="h-4 w-4" />
@@ -107,14 +106,13 @@ export const RecordingControls = ({
               variant="outline"
               size="icon"
               onClick={handleSaveClick}
-              className="bg-white/90"
             >
               <Save className="h-4 w-4" />
             </Button>
 
             <AlertDialog>
               <AlertDialogTrigger asChild>
-                <Button variant="outline" size="icon" className="bg-white/90">
+                <Button variant="outline" size="icon">
                   <X className="h-4 w-4" />
                 </Button>
               </AlertDialogTrigger>
