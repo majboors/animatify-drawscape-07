@@ -10,12 +10,14 @@ export const ScreenRecorder = forwardRef((props, ref) => {
   const [videoUrl, setVideoUrl] = useState<string | null>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
+  const streamRef = useRef<MediaStream | null>(null);
 
   useImperativeHandle(ref, () => ({
     startRecording: async () => {
       try {
         console.log("Starting recording setup...");
         const combinedStream = await startScreenRecording();
+        streamRef.current = combinedStream;
         
         const mediaRecorder = new MediaRecorder(combinedStream, {
           mimeType: 'video/webm;codecs=vp8,opus'
@@ -60,14 +62,18 @@ export const ScreenRecorder = forwardRef((props, ref) => {
           }
 
           // Cleanup streams
-          combinedStream.getTracks().forEach(track => {
-            track.stop();
-            console.log(`Stopped track: ${track.kind}`);
-          });
+          if (streamRef.current) {
+            streamRef.current.getTracks().forEach(track => {
+              track.stop();
+              console.log(`Stopped track: ${track.kind}`);
+            });
+            streamRef.current = null;
+          }
         };
 
         mediaRecorder.start(1000); // Collect data every second
         setIsRecording(true);
+        toast.success("Recording started");
       } catch (error) {
         console.error("Recording setup error:", error);
         toast.error("Failed to start recording");
@@ -82,11 +88,13 @@ export const ScreenRecorder = forwardRef((props, ref) => {
     pauseRecording: () => {
       if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
         mediaRecorderRef.current.pause();
+        toast.success("Recording paused");
       }
     },
     resumeRecording: () => {
       if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'paused') {
         mediaRecorderRef.current.resume();
+        toast.success("Recording resumed");
       }
     }
   }));

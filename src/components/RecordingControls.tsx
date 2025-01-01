@@ -5,6 +5,7 @@ import { ProjectDialog } from "./ProjectDialog";
 import { useState, useRef } from "react";
 import { ScreenRecorder } from "./ScreenRecorder";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "./ui/alert-dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "./ui/dialog";
 
 interface RecordingControlsProps {
   isRecording: boolean;
@@ -22,18 +23,14 @@ export const RecordingControls = ({
   onSaveBoard,
 }: RecordingControlsProps) => {
   const [showProjectDialog, setShowProjectDialog] = useState(false);
+  const [showRecordingDialog, setShowRecordingDialog] = useState(false);
   const screenRecorderRef = useRef(null);
 
   const handleRecordClick = () => {
     if (!isRecording) {
       setShowProjectDialog(true);
     } else {
-      console.log("[RecordingControls] Stop recording clicked");
-      if (screenRecorderRef.current) {
-        screenRecorderRef.current.stopRecording();
-        toast.success("Recording stopped successfully");
-      }
-      onRecordingClick();
+      setShowRecordingDialog(true);
     }
   };
 
@@ -43,6 +40,7 @@ export const RecordingControls = ({
     if (screenRecorderRef.current) {
       screenRecorderRef.current.startRecording();
       toast.success("Recording started successfully");
+      setShowRecordingDialog(true);
     }
     onRecordingClick();
   };
@@ -71,77 +69,94 @@ export const RecordingControls = ({
     if (screenRecorderRef.current) {
       screenRecorderRef.current.stopRecording();
       toast.success("Recording stopped successfully");
+      setShowRecordingDialog(false);
     }
     onRecordingClick();
   };
 
   return (
-    <div className="flex gap-2">
-      {isRecording && (
+    <>
+      <div className="flex gap-2">
         <Button
-          variant="destructive"
-          size="sm"
-          onClick={handleSaveClick}
-          className="mr-2"
+          variant="outline"
+          size="icon"
+          onClick={handleRecordClick}
+          className={isRecording ? "bg-red-500 text-white hover:bg-red-600" : ""}
         >
-          <Save className="h-4 w-4 mr-1" />
-          Save Board
+          {isRecording ? <Square className="h-4 w-4" /> : <Video className="h-4 w-4" />}
         </Button>
-      )}
+      </div>
 
-      <Button
-        variant="outline"
-        size="icon"
-        onClick={handleRecordClick}
-        className={isRecording ? "bg-red-500 text-white hover:bg-red-600" : ""}
-      >
-        {isRecording ? <Square className="h-4 w-4" /> : <Video className="h-4 w-4" />}
-      </Button>
+      <Dialog open={showRecordingDialog} onOpenChange={setShowRecordingDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Recording Controls</DialogTitle>
+          </DialogHeader>
+          <div className="flex flex-col gap-4">
+            <div className="flex justify-center gap-4">
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={handlePauseResumeClick}
+                disabled={!isRecording}
+              >
+                {isPaused ? (
+                  <Play className="h-4 w-4" />
+                ) : (
+                  <Pause className="h-4 w-4" />
+                )}
+              </Button>
 
-      <Button
-        variant="outline"
-        size="icon"
-        onClick={handlePauseResumeClick}
-        disabled={!isRecording}
-      >
-        {isPaused ? (
-          <Play className="h-4 w-4" />
-        ) : (
-          <Pause className="h-4 w-4" />
-        )}
-      </Button>
+              <Button
+                variant="destructive"
+                size="icon"
+                onClick={() => setShowRecordingDialog(false)}
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
 
-      {isRecording && (
-        <AlertDialog>
-          <AlertDialogTrigger asChild>
-            <Button variant="outline" size="icon">
-              <X className="h-4 w-4" />
+            <Button
+              variant="destructive"
+              onClick={handleSaveClick}
+              className="w-full"
+            >
+              <Save className="h-4 w-4 mr-2" />
+              Save Board
             </Button>
-          </AlertDialogTrigger>
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>Stop Recording?</AlertDialogTitle>
-              <AlertDialogDescription>
-                Are you sure you want to stop the recording? This action cannot be undone.
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel>Cancel</AlertDialogCancel>
-              <AlertDialogAction onClick={handleStopRecording}>
-                Stop Recording
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
-      )}
 
-      <ScreenRecorder ref={screenRecorderRef} />
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button variant="outline" className="w-full">
+                  Stop Recording
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Stop Recording?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    Are you sure you want to stop the recording? This action cannot be undone.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogAction onClick={handleStopRecording}>
+                    Stop Recording
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       <ProjectDialog
         isOpen={showProjectDialog}
         onOpenChange={setShowProjectDialog}
         onProjectCreated={handleProjectCreated}
       />
-    </div>
+
+      <ScreenRecorder ref={screenRecorderRef} />
+    </>
   );
 };
