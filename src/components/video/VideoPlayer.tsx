@@ -23,23 +23,6 @@ export const VideoPlayer = ({ recordingId, onPlay, onDelete }: VideoPlayerProps)
     fetchRecording();
   }, [recordingId]);
 
-  const hexToString = (hex: string): string => {
-    try {
-      // Remove 'blob:' prefix if present
-      hex = hex.replace(/^blob:/, '');
-      
-      // Convert hex to string
-      let str = '';
-      for (let i = 0; i < hex.length; i += 2) {
-        str += String.fromCharCode(parseInt(hex.substr(i, 2), 16));
-      }
-      return str;
-    } catch (error) {
-      console.error("Error converting hex to string:", error);
-      return hex;
-    }
-  };
-
   const fetchRecording = async () => {
     try {
       setIsLoading(true);
@@ -58,21 +41,9 @@ export const VideoPlayer = ({ recordingId, onPlay, onDelete }: VideoPlayerProps)
       }
 
       if (data) {
-        let videoUrl = data.video_data;
-        
-        // Check if the URL is hex-encoded
-        if (videoUrl && /^[0-9a-fA-F]+$/.test(videoUrl)) {
-          console.log("Converting hex URL to string");
-          videoUrl = hexToString(videoUrl);
-        }
-
-        const cleanedData = {
-          ...data,
-          video_data: videoUrl
-        };
-        
-        console.log("Recording loaded:", cleanedData);
-        setRecording(cleanedData);
+        // Store the video_data directly without any transformation
+        setRecording(data);
+        console.log("Recording loaded:", data);
       }
     } catch (error) {
       console.error("Error in fetchRecording:", error);
