@@ -35,11 +35,10 @@ export const RecordingControls = ({
   const handleProjectCreated = (projectId: string) => {
     setShowProjectDialog(false);
     console.log("[RecordingControls] Project selected, starting recording with ID:", projectId);
-    onRecordingClick();
     if (screenRecorderRef.current) {
       screenRecorderRef.current.startRecording();
-      setIsRecording(true);
     }
+    onRecordingClick();
   };
 
   const handlePauseResumeClick = () => {
