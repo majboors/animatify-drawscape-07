@@ -46,14 +46,14 @@ export const RecordingPreviewDialog = ({
     }
 
     try {
-      console.log("Converting video to MP4...");
+      console.log("Starting video upload process...");
       
       // Create a unique file path with .mp4 extension
       const timestamp = Date.now();
       const uuid = crypto.randomUUID();
       const filePath = `${projectId}/${timestamp}-${uuid}.mp4`;
 
-      console.log("Uploading MP4 video to storage...");
+      console.log("Uploading video to storage...");
 
       // Upload to storage bucket
       const { data: storageData, error: storageError } = await supabase
@@ -65,7 +65,10 @@ export const RecordingPreviewDialog = ({
           upsert: false
         });
 
-      if (storageError) throw storageError;
+      if (storageError) {
+        console.error("Storage upload error:", storageError);
+        throw storageError;
+      }
 
       // Get public URL from Supabase storage
       const { data: { publicUrl } } = supabase
@@ -81,12 +84,15 @@ export const RecordingPreviewDialog = ({
         .insert({
           project_id: projectId,
           name: `Recording ${new Date().toLocaleString()}`,
-          video_data: publicUrl
+          video_data: publicUrl // Store the public URL instead of the blob
         })
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error("Database error:", error);
+        throw error;
+      }
 
       setShowProjectDialog(false);
       onOpenChange(false);
