@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -8,25 +9,48 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 interface ProjectDialogProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
-  onCreateProject: () => void;
-  projectName: string;
-  setProjectName: (name: string) => void;
+  onProjectCreated: (projectId: string) => void;
 }
 
 export const ProjectDialog = ({
   isOpen,
   onOpenChange,
-  onCreateProject,
-  projectName,
-  setProjectName,
+  onProjectCreated,
 }: ProjectDialogProps) => {
-  const handleSubmit = (e: React.FormEvent) => {
+  const [projectName, setProjectName] = useState("");
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    onCreateProject();
+    
+    if (!projectName.trim()) {
+      toast.error("Please enter a project name");
+      return;
+    }
+
+    try {
+      const { data, error } = await supabase
+        .from('projects')
+        .insert([{ name: projectName }])
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      if (data) {
+        onProjectCreated(data.id);
+        setProjectName("");
+        toast.success("Project created successfully");
+      }
+    } catch (error) {
+      console.error('Error creating project:', error);
+      toast.error("Failed to create project");
+    }
   };
 
   return (
@@ -36,7 +60,7 @@ export const ProjectDialog = ({
           <DialogHeader>
             <DialogTitle>Create New Project</DialogTitle>
             <DialogDescription>
-              Enter a name for your new project. This will start a new recording session.
+              Enter a name for your new project. This will help organize your recordings.
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">

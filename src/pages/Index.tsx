@@ -1,7 +1,7 @@
 import { useState, useRef } from "react";
 import { Toolbar } from "@/components/Toolbar";
 import { Canvas, CanvasRef } from "@/components/Canvas";
-import { VideoSidebar } from "@/components/VideoSidebar";
+import { ProjectSidebar } from "@/components/ProjectSidebar";
 import { CameraControls } from "@/components/CameraControls";
 import { UserCamera } from "@/components/UserCamera";
 import { saveBoardState } from "@/utils/boardState";
@@ -43,12 +43,7 @@ const Index = () => {
         activeColor={activeColor}
         activeFont={activeFont}
       />
-      <VideoSidebar
-        isOpen={isSidebarOpen}
-        onOpenChange={setIsSidebarOpen}
-        currentRecordingId={currentRecordingId}
-        setCurrentRecordingId={setCurrentRecordingId}
-      />
+      <ProjectSidebar />
       <CameraControls
         onToggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)}
         onSaveBoard={handleSaveBoard}
