@@ -48,17 +48,19 @@ export const RecordingPreviewDialog = ({
     try {
       console.log("Starting video upload process...");
       
-      // Convert Blob to File with .mp4 extension
-      const videoFile = new File([videoBlob], 'recording.mp4', { type: 'video/mp4' });
+      // Convert Blob to File with .mp4 extension and proper MIME type
+      const videoFile = new File([videoBlob], 'recording.mp4', { 
+        type: 'video/mp4'
+      });
       
-      // Create a unique file path
+      // Create a unique file path for Supabase storage
       const timestamp = Date.now();
       const uuid = crypto.randomUUID();
       const filePath = `${projectId}/${timestamp}-${uuid}.mp4`;
 
-      console.log("Uploading video to storage...");
+      console.log("Uploading video to storage bucket...");
 
-      // Upload to storage bucket
+      // Upload to Supabase storage bucket
       const { data: storageData, error: storageError } = await supabase
         .storage
         .from('videos')
@@ -73,15 +75,17 @@ export const RecordingPreviewDialog = ({
         throw storageError;
       }
 
-      // Get public URL from Supabase storage
+      console.log("Video uploaded successfully, getting public URL...");
+
+      // Get the public URL from Supabase storage
       const { data: { publicUrl } } = supabase
         .storage
         .from('videos')
         .getPublicUrl(filePath);
 
-      console.log("Video uploaded successfully, public URL:", publicUrl);
+      console.log("Public URL generated:", publicUrl);
 
-      // Save recording metadata with the Supabase storage URL
+      // Save recording metadata with the public URL
       const { data, error } = await supabase
         .from('recordings')
         .insert({
@@ -97,7 +101,7 @@ export const RecordingPreviewDialog = ({
         throw error;
       }
 
-      console.log("Recording saved to database:", data);
+      console.log("Recording metadata saved to database:", data);
       setShowProjectDialog(false);
       onOpenChange(false);
       toast.success("Recording saved successfully");
