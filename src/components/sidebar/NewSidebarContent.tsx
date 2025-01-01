@@ -2,6 +2,8 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { Button } from "../ui/button";
 import { ScrollArea } from "../ui/scroll-area";
+import Editor from "@monaco-editor/react";
+import { Maximize2, Minimize2 } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -9,7 +11,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "../ui/select";
-import { Textarea } from "../ui/textarea";
 
 interface NewSidebarContentProps {
   onOutputChange: (output: string) => void;
@@ -20,6 +21,7 @@ export const NewSidebarContent = ({ onOutputChange }: NewSidebarContentProps) =>
   const [filename, setFilename] = useState("test.py");
   const [code, setCode] = useState("");
   const [output, setOutput] = useState("");
+  const [isFullscreen, setIsFullscreen] = useState(false);
 
   const handleRun = async () => {
     try {
@@ -32,42 +34,85 @@ export const NewSidebarContent = ({ onOutputChange }: NewSidebarContentProps) =>
     }
   };
 
-  return (
-    <ScrollArea className="flex-1 p-4">
-      <div className="space-y-4">
-        <div className="flex gap-4">
-          <Select
-            value={language}
-            onValueChange={(value) => {
-              setLanguage(value);
-              setFilename(`test.${value === "python" ? "py" : value}`);
-            }}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Select language" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="python">Python</SelectItem>
-              <SelectItem value="ruby">Ruby</SelectItem>
-              <SelectItem value="rust">Rust</SelectItem>
-            </SelectContent>
-          </Select>
+  const languageExtensions: { [key: string]: string } = {
+    python: "py",
+    javascript: "js",
+    typescript: "ts",
+    java: "java",
+    cpp: "cpp",
+  };
 
-          <input
-            type="text"
-            value={filename}
-            onChange={(e) => setFilename(e.target.value)}
-            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-            placeholder="Filename"
-          />
+  const handleLanguageChange = (value: string) => {
+    setLanguage(value);
+    const ext = languageExtensions[value];
+    setFilename(`test.${ext}`);
+  };
+
+  const toggleFullscreen = () => {
+    setIsFullscreen(!isFullscreen);
+  };
+
+  return (
+    <ScrollArea className={`flex-1 p-4 ${isFullscreen ? 'fixed inset-0 z-50 bg-background' : ''}`}>
+      <div className="space-y-4">
+        <div className="flex items-center justify-between gap-4">
+          <div className="flex flex-1 gap-4">
+            <Select value={language} onValueChange={handleLanguageChange}>
+              <SelectTrigger className="w-[180px]">
+                <SelectValue placeholder="Select language" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="python">Python</SelectItem>
+                <SelectItem value="javascript">JavaScript</SelectItem>
+                <SelectItem value="typescript">TypeScript</SelectItem>
+                <SelectItem value="java">Java</SelectItem>
+                <SelectItem value="cpp">C++</SelectItem>
+              </SelectContent>
+            </Select>
+
+            <input
+              type="text"
+              value={filename}
+              onChange={(e) => setFilename(e.target.value)}
+              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+              placeholder="Filename"
+            />
+          </div>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={toggleFullscreen}
+            className="ml-2"
+          >
+            {isFullscreen ? (
+              <Minimize2 className="h-4 w-4" />
+            ) : (
+              <Maximize2 className="h-4 w-4" />
+            )}
+          </Button>
         </div>
 
-        <Textarea
-          value={code}
-          onChange={(e) => setCode(e.target.value)}
-          placeholder="Write your code here..."
-          className="min-h-[200px] font-mono"
-        />
+        <div className={`relative ${isFullscreen ? 'h-[80vh]' : 'h-[400px]'}`}>
+          <Editor
+            height="100%"
+            defaultLanguage="python"
+            language={language}
+            value={code}
+            onChange={(value) => setCode(value || "")}
+            theme="vs-dark"
+            options={{
+              minimap: { enabled: false },
+              fontSize: 14,
+              wordWrap: "on",
+              automaticLayout: true,
+              scrollBeyondLastLine: false,
+              lineNumbers: "on",
+              folding: true,
+              tabSize: 2,
+            }}
+            className="rounded-md overflow-hidden border border-input"
+          />
+        </div>
 
         <Button onClick={handleRun} className="w-full">
           Run Code
