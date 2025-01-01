@@ -28,6 +28,9 @@ export const RecordingControls = ({
       setShowProjectDialog(true);
     } else {
       console.log("[RecordingControls] Stop recording clicked");
+      if (screenRecorderRef.current) {
+        screenRecorderRef.current.stopRecording();
+      }
       onRecordingClick();
     }
   };
