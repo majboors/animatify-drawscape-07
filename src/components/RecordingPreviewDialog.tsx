@@ -48,9 +48,6 @@ export const RecordingPreviewDialog = ({
     try {
       console.log("Converting video to MP4...");
       
-      // Convert blob to MP4 format
-      const mp4Blob = new Blob([videoBlob], { type: 'video/mp4' });
-      
       // Create a unique file path with .mp4 extension
       const timestamp = Date.now();
       const uuid = crypto.randomUUID();
@@ -62,7 +59,7 @@ export const RecordingPreviewDialog = ({
       const { data: storageData, error: storageError } = await supabase
         .storage
         .from('videos')
-        .upload(filePath, mp4Blob, {
+        .upload(filePath, videoBlob, {
           contentType: 'video/mp4',
           cacheControl: '3600',
           upsert: false
