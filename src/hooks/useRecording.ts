@@ -27,14 +27,16 @@ export const useRecording = ({
     try {
       console.log("[useRecording] Starting recording process...");
       const stream = await startScreenRecording();
+      
       if (!stream) {
         throw new Error("Failed to get media stream");
       }
+      
       console.log("[useRecording] Got media stream:", stream.id);
-
       setPreviewStream(stream);
+
       const recorder = new MediaRecorder(stream, {
-        mimeType: 'video/webm;codecs=vp9'
+        mimeType: 'video/webm;codecs=h264'
       });
       
       recorder.ondataavailable = (event) => {
@@ -54,17 +56,32 @@ export const useRecording = ({
       recorder.onstop = async () => {
         console.log("[useRecording] Recording stopped");
         setIsRecording(false);
+        
         if (chunksRef.current.length > 0) {
-          const blob = new Blob(chunksRef.current, { type: "video/webm" });
+          const blob = new Blob(chunksRef.current, { type: 'video/mp4' });
           console.log("[useRecording] Created blob:", blob.size, "bytes");
+          
           if (currentProjectId) {
-            await saveRecordingToDatabase(
-              currentProjectId,
-              `Recording ${new Date().toISOString()}`,
-              blob
-            );
+            try {
+              await saveRecordingToDatabase(
+                currentProjectId,
+                `Recording ${new Date().toISOString()}`,
+                blob
+              );
+              chunksRef.current = [];
+            } catch (error) {
+              console.error("[useRecording] Error saving recording:", error);
+              toast.error("Failed to save recording");
+            }
           }
         }
+
+        // Clean up streams
+        stream.getTracks().forEach(track => {
+          track.stop();
+          console.log(`[useRecording] Stopped track: ${track.kind}`);
+        });
+        setPreviewStream(null);
       };
 
       recorder.onpause = () => {
@@ -107,11 +124,6 @@ export const useRecording = ({
       if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
         console.log("[useRecording] Stopping recording");
         mediaRecorderRef.current.stop();
-        const tracks = mediaRecorderRef.current.stream.getTracks();
-        tracks.forEach(track => {
-          console.log(`[useRecording] Stopping track: ${track.kind}`);
-          track.stop();
-        });
         setIsRecording(false);
         setIsPaused(false);
         setPreviewStream(null);
@@ -133,12 +145,8 @@ export const useRecording = ({
 
   const handleSaveBoardClick = async () => {
     console.log("[useRecording] Save board clicked");
-    if (mediaRecorderRef.current?.state === 'recording') {
-      console.log("[useRecording] Stopping recording before saving board");
-      mediaRecorderRef.current.stop();
-    }
-    console.log("[useRecording] Saving board state");
     await onSaveBoard();
+    toast.success("Board state saved");
   };
 
   return {

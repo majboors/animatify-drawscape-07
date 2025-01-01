@@ -12,23 +12,20 @@ export const saveRecordingToDatabase = async (
     console.log("[recordingUtils] Recording name:", recordingName);
     console.log("[recordingUtils] Video size:", videoBlob.size, "bytes");
 
-    // Convert Blob to File with proper extension
-    const file = new File([videoBlob], `recording-${Date.now()}.webm`, {
-      type: 'video/webm',
+    // Convert video blob to MP4 File
+    const file = new File([videoBlob], `recording-${Date.now()}.mp4`, {
+      type: 'video/mp4',
     });
 
     // Create a unique file path
-    const filePath = `${projectId}/${Date.now()}-${crypto.randomUUID()}.webm`;
+    const filePath = `${projectId}/${Date.now()}-${crypto.randomUUID()}.mp4`;
     console.log("[recordingUtils] Uploading to storage path:", filePath);
 
     // Upload to storage bucket
     const { data: storageData, error: storageError } = await supabase
       .storage
       .from('videos')
-      .upload(filePath, file, {
-        contentType: 'video/webm',
-        upsert: false
-      });
+      .upload(filePath, file);
 
     if (storageError) {
       console.error("[recordingUtils] Storage error:", storageError);
@@ -73,66 +70,40 @@ export const saveRecordingToDatabase = async (
 
 export const startScreenRecording = async () => {
   try {
-    console.log("[recordingUtils] Requesting screen share...");
-    const screenStream = await requestScreenShare();
-    if (!screenStream) {
-      throw new Error("Failed to get screen access");
-    }
-
-    const micStream = await requestMicrophoneAccess();
-    if (!micStream) {
-      console.log("[recordingUtils] No microphone access, recording without audio");
-      return screenStream;
-    }
-
-    const tracks = [
-      ...screenStream.getVideoTracks(),
-      ...micStream.getAudioTracks()
-    ];
-
-    console.log("[recordingUtils] Recording setup complete");
-    return new MediaStream(tracks);
-  } catch (error: any) {
-    console.error("[recordingUtils] Recording setup error:", error);
-    throw error;
-  }
-};
-
-export const requestScreenShare = async () => {
-  try {
-    console.log("[recordingUtils] Requesting screen share permission...");
-    const screenStream = await navigator.mediaDevices.getDisplayMedia({ 
-      video: { 
-        displaySurface: "browser",
+    console.log("[recordingUtils] Starting screen recording setup...");
+    
+    // Get screen stream with audio
+    const screenStream = await navigator.mediaDevices.getDisplayMedia({
+      video: {
         width: { ideal: 1920 },
         height: { ideal: 1080 },
         frameRate: { ideal: 30 }
-      }
+      },
+      audio: true // Capture system audio
     });
-    console.log("[recordingUtils] Screen share granted");
-    return screenStream;
-  } catch (error: any) {
-    console.error("[recordingUtils] Screen share error:", error);
-    if (error.name === 'NotAllowedError') {
-      throw new Error("Please allow screen sharing to start recording");
-    }
-    throw new Error("Failed to access screen sharing");
-  }
-};
 
-export const requestMicrophoneAccess = async () => {
-  try {
-    console.log("[recordingUtils] Requesting microphone access...");
-    const stream = await navigator.mediaDevices.getUserMedia({ 
+    // Get microphone audio
+    const micStream = await navigator.mediaDevices.getUserMedia({
       audio: {
         echoCancellation: true,
         noiseSuppression: true,
       }
     });
-    console.log("[recordingUtils] Microphone access granted");
-    return stream;
-  } catch (error) {
-    console.warn("[recordingUtils] Microphone access denied:", error);
-    return null;
+
+    // Combine all tracks
+    const tracks = [
+      ...screenStream.getVideoTracks(),
+      ...screenStream.getAudioTracks(),
+      ...micStream.getAudioTracks()
+    ];
+
+    console.log("[recordingUtils] Recording setup complete with tracks:", tracks.length);
+    return new MediaStream(tracks);
+  } catch (error: any) {
+    console.error("[recordingUtils] Recording setup error:", error);
+    if (error.name === 'NotAllowedError') {
+      throw new Error("Please allow screen sharing and audio access to start recording");
+    }
+    throw error;
   }
 };
