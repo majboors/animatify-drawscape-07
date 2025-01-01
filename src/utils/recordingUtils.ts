@@ -7,7 +7,9 @@ export const saveRecordingToDatabase = async (
   videoData: string
 ) => {
   try {
-    console.log("Starting video upload process...");
+    console.log("[recordingUtils] Starting video upload process...");
+    console.log("[recordingUtils] Project ID:", projectId);
+    console.log("[recordingUtils] Recording name:", recordingName);
     
     // Convert base64 to blob
     const base64Data = videoData.split(',')[1];
@@ -25,11 +27,11 @@ export const saveRecordingToDatabase = async (
     }
     
     const blob = new Blob(byteArrays, { type: 'video/webm' });
-    console.log("Blob created:", blob.size, "bytes");
+    console.log("[recordingUtils] Blob created:", blob.size, "bytes");
 
     // Generate unique filename
     const fileName = `${Date.now()}-${recordingName}.webm`;
-    console.log("Uploading file:", fileName);
+    console.log("[recordingUtils] Uploading file:", fileName);
 
     // Upload to storage bucket
     const { data: uploadData, error: uploadError } = await supabase.storage
@@ -40,11 +42,11 @@ export const saveRecordingToDatabase = async (
       });
 
     if (uploadError) {
-      console.error('Storage upload error:', uploadError);
+      console.error('[recordingUtils] Storage upload error:', uploadError);
       throw uploadError;
     }
 
-    console.log("Upload successful:", uploadData);
+    console.log("[recordingUtils] Upload successful:", uploadData);
 
     // Get public URL
     const { data: urlData } = supabase.storage
@@ -52,7 +54,7 @@ export const saveRecordingToDatabase = async (
       .getPublicUrl(fileName);
 
     const publicUrl = urlData.publicUrl;
-    console.log('Video public URL:', publicUrl);
+    console.log('[recordingUtils] Video public URL:', publicUrl);
 
     // Save recording reference in database
     const { data: recordingData, error: dbError } = await supabase
@@ -66,21 +68,21 @@ export const saveRecordingToDatabase = async (
       .single();
 
     if (dbError) {
-      console.error('Database error:', dbError);
+      console.error('[recordingUtils] Database error:', dbError);
       throw dbError;
     }
 
-    console.log('Recording saved in database:', recordingData);
+    console.log('[recordingUtils] Recording saved in database:', recordingData);
     return recordingData;
   } catch (error) {
-    console.error('Error in saveRecordingToDatabase:', error);
+    console.error('[recordingUtils] Error in saveRecordingToDatabase:', error);
     throw error;
   }
 };
 
 export const startScreenRecording = async () => {
   try {
-    console.log("Starting screen recording...");
+    console.log("[recordingUtils] Starting screen recording...");
     const screenStream = await requestScreenShare();
     if (!screenStream) {
       throw new Error("Failed to get screen access");
@@ -88,7 +90,7 @@ export const startScreenRecording = async () => {
 
     const micStream = await requestMicrophoneAccess();
     if (!micStream) {
-      console.log("Recording without audio - microphone access denied");
+      console.log("[recordingUtils] Recording without audio - microphone access denied");
       return screenStream;
     }
 
@@ -97,17 +99,17 @@ export const startScreenRecording = async () => {
       ...micStream.getAudioTracks()
     ];
 
-    console.log("Screen recording started successfully");
+    console.log("[recordingUtils] Screen recording started successfully");
     return new MediaStream(tracks);
   } catch (error: any) {
-    console.error('Error starting recording:', error);
+    console.error('[recordingUtils] Error starting recording:', error);
     throw error;
   }
 };
 
 export const requestScreenShare = async () => {
   try {
-    console.log("Requesting screen share permission...");
+    console.log("[recordingUtils] Requesting screen share permission...");
     const screenStream = await navigator.mediaDevices.getDisplayMedia({ 
       video: { 
         displaySurface: "browser",
@@ -116,10 +118,10 @@ export const requestScreenShare = async () => {
         frameRate: { ideal: 30 }
       }
     });
-    console.log("Screen share permission granted");
+    console.log("[recordingUtils] Screen share permission granted");
     return screenStream;
   } catch (error: any) {
-    console.error('Error requesting screen share:', error);
+    console.error('[recordingUtils] Error requesting screen share:', error);
     if (error.name === 'NotAllowedError') {
       throw new Error("Please allow screen sharing to start recording.");
     }
@@ -129,17 +131,17 @@ export const requestScreenShare = async () => {
 
 export const requestMicrophoneAccess = async () => {
   try {
-    console.log("Requesting microphone access...");
+    console.log("[recordingUtils] Requesting microphone access...");
     const stream = await navigator.mediaDevices.getUserMedia({ 
       audio: {
         echoCancellation: true,
         noiseSuppression: true,
       }
     });
-    console.log("Microphone access granted");
+    console.log("[recordingUtils] Microphone access granted");
     return stream;
   } catch (error) {
-    console.warn('Microphone access denied:', error);
+    console.warn('[recordingUtils] Microphone access denied:', error);
     return null;
   }
 };

@@ -18,17 +18,17 @@ export const RecordingControls = ({
   onSaveBoard,
 }: RecordingControlsProps) => {
   const handleRecordClick = () => {
-    console.log("Record button clicked");
+    console.log(`[RecordingControls] Record button clicked. Current state: ${isRecording ? 'recording' : 'not recording'}`);
     onRecordingClick();
   };
 
   const handlePauseResumeClick = () => {
-    console.log(`${isPaused ? "Resume" : "Pause"} button clicked`);
+    console.log(`[RecordingControls] ${isPaused ? "Resume" : "Pause"} button clicked. Current state: ${isPaused ? 'paused' : 'recording'}`);
     onPauseResume();
   };
 
   const handleSaveClick = () => {
-    console.log("Save button clicked");
+    console.log("[RecordingControls] Save button clicked, initiating save process...");
     onSaveBoard();
   };
 
