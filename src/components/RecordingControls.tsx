@@ -5,6 +5,7 @@ import { ProjectDialog } from "./ProjectDialog";
 import { useState, useRef } from "react";
 import { ScreenRecorder } from "./ScreenRecorder";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "./ui/alert-dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "./ui/dialog";
 import { RecordingPreviewDialog } from "./RecordingPreviewDialog";
 
 interface RecordingControlsProps {
@@ -23,6 +24,7 @@ export const RecordingControls = ({
   onSaveBoard,
 }: RecordingControlsProps) => {
   const [showProjectDialog, setShowProjectDialog] = useState(false);
+  const [showRecordingDialog, setShowRecordingDialog] = useState(false);
   const [currentProjectId, setCurrentProjectId] = useState<string | null>(null);
   const [recordingBlob, setRecordingBlob] = useState<Blob | null>(null);
   const [showPreviewDialog, setShowPreviewDialog] = useState(false);
@@ -32,7 +34,7 @@ export const RecordingControls = ({
     if (!isRecording) {
       setShowProjectDialog(true);
     } else {
-      handleStopRecording();
+      setShowRecordingDialog(true);
     }
   };
 
@@ -43,6 +45,7 @@ export const RecordingControls = ({
     if (screenRecorderRef.current) {
       screenRecorderRef.current.startRecording();
       toast.success("Recording started successfully");
+      setShowRecordingDialog(true);
     }
     onRecordingClick();
   };
@@ -74,13 +77,14 @@ export const RecordingControls = ({
         setShowPreviewDialog(true);
       });
       toast.success("Recording stopped successfully");
+      setShowRecordingDialog(false);
     }
     onRecordingClick();
   };
 
   return (
     <>
-      <div className="flex items-center gap-2">
+      <div className="flex gap-2">
         <Button
           variant="outline"
           size="icon"
@@ -89,34 +93,50 @@ export const RecordingControls = ({
         >
           {isRecording ? <Square className="h-4 w-4" /> : <Video className="h-4 w-4" />}
         </Button>
+      </div>
 
-        {isRecording && (
-          <>
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={handlePauseResumeClick}
-            >
-              {isPaused ? (
-                <Play className="h-4 w-4" />
-              ) : (
-                <Pause className="h-4 w-4" />
-              )}
-            </Button>
+      <Dialog open={showRecordingDialog} onOpenChange={setShowRecordingDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Recording Controls</DialogTitle>
+          </DialogHeader>
+          <div className="flex flex-col gap-4">
+            <div className="flex justify-center gap-4">
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={handlePauseResumeClick}
+                disabled={!isRecording}
+              >
+                {isPaused ? (
+                  <Play className="h-4 w-4" />
+                ) : (
+                  <Pause className="h-4 w-4" />
+                )}
+              </Button>
+
+              <Button
+                variant="destructive"
+                size="icon"
+                onClick={() => setShowRecordingDialog(false)}
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
 
             <Button
-              variant="outline"
-              size="icon"
+              variant="destructive"
               onClick={handleSaveClick}
-              className="bg-blue-500 text-white hover:bg-blue-600"
+              className="w-full"
             >
-              <Save className="h-4 w-4" />
+              <Save className="h-4 w-4 mr-2" />
+              Save Board
             </Button>
 
             <AlertDialog>
               <AlertDialogTrigger asChild>
-                <Button variant="outline" size="icon">
-                  <X className="h-4 w-4" />
+                <Button variant="outline" className="w-full">
+                  Stop Recording
                 </Button>
               </AlertDialogTrigger>
               <AlertDialogContent>
@@ -134,9 +154,9 @@ export const RecordingControls = ({
                 </AlertDialogFooter>
               </AlertDialogContent>
             </AlertDialog>
-          </>
-        )}
-      </div>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       <ProjectDialog
         isOpen={showProjectDialog}
