@@ -46,19 +46,24 @@ export const RecordingPreviewDialog = ({
     }
 
     try {
-      console.log("Uploading video to storage...");
+      console.log("Converting video to MP4...");
+      
+      // Convert blob to MP4 format
+      const mp4Blob = new Blob([videoBlob], { type: 'video/mp4' });
       
       // Create a unique file path
       const timestamp = Date.now();
       const uuid = crypto.randomUUID();
-      const filePath = `${projectId}/${timestamp}-${uuid}.webm`;
+      const filePath = `${projectId}/${timestamp}-${uuid}.mp4`;
+
+      console.log("Uploading MP4 video to storage...");
 
       // Upload to storage bucket
       const { data: storageData, error: storageError } = await supabase
         .storage
         .from('videos')
-        .upload(filePath, videoBlob, {
-          contentType: 'video/webm',
+        .upload(filePath, mp4Blob, {
+          contentType: 'video/mp4',
           cacheControl: '3600',
           upsert: false
         });
