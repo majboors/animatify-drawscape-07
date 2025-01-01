@@ -12,8 +12,6 @@ const Index = () => {
   const [activeTool, setActiveTool] = useState("select");
   const [activeColor, setActiveColor] = useState("#0078D4");
   const [activeFont, setActiveFont] = useState("Arial");
-  const [isRecording, setIsRecording] = useState(false);
-  const [isPaused, setIsPaused] = useState(false);
   const [isVideoSidebarOpen, setIsVideoSidebarOpen] = useState(false);
   const [currentRecordingId, setCurrentRecordingId] = useState<string | null>(null);
   const [showProjectDialog, setShowProjectDialog] = useState(false);
@@ -30,7 +28,7 @@ const Index = () => {
         activeTool={activeTool}
         activeColor={activeColor}
         activeFont={activeFont}
-        isRecording={isRecording}
+        isRecording={false}
         onToolChange={setActiveTool}
         onColorChange={setActiveColor}
         onFontChange={setActiveFont}
@@ -55,11 +53,6 @@ const Index = () => {
             await saveBoardState(canvasRef.current, currentRecordingId);
           }
         }}
-        isRecording={isRecording}
-        setIsRecording={setIsRecording}
-        isPaused={isPaused}
-        setIsPaused={setIsPaused}
-        onStartRecording={() => setShowProjectDialog(true)}
       />
       <UserCamera />
       <ProjectDialog
