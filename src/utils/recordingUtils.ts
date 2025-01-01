@@ -23,11 +23,9 @@ export const saveRecordingToDatabase = async (
   }
 };
 
-export const startScreenRecording = async () => {
+export const requestScreenShare = async () => {
   try {
-    console.log("Requesting screen and audio permissions...");
-    
-    // Request screen capture
+    console.log("Requesting screen share permission...");
     const screenStream = await navigator.mediaDevices.getDisplayMedia({ 
       video: { 
         displaySurface: "browser",
@@ -36,23 +34,46 @@ export const startScreenRecording = async () => {
         frameRate: { ideal: 30 }
       }
     });
+    return screenStream;
+  } catch (error: any) {
+    console.error('Error requesting screen share:', error);
+    if (error.name === 'NotAllowedError') {
+      throw new Error("Please allow screen sharing to start recording.");
+    }
+    throw new Error("Failed to access screen sharing. Please try again.");
+  }
+};
 
-    // Request microphone separately
-    let micStream;
-    try {
-      micStream = await navigator.mediaDevices.getUserMedia({ 
-        audio: {
-          echoCancellation: true,
-          noiseSuppression: true,
-        }
-      });
-    } catch (micError) {
-      console.warn('Microphone access denied:', micError);
+export const requestMicrophoneAccess = async () => {
+  try {
+    return await navigator.mediaDevices.getUserMedia({ 
+      audio: {
+        echoCancellation: true,
+        noiseSuppression: true,
+      }
+    });
+  } catch (error) {
+    console.warn('Microphone access denied:', error);
+    return null;
+  }
+};
+
+export const startScreenRecording = async () => {
+  try {
+    // First request screen sharing permission
+    const screenStream = await requestScreenShare();
+    if (!screenStream) {
+      throw new Error("Failed to get screen access");
+    }
+
+    // Then try to get microphone access
+    const micStream = await requestMicrophoneAccess();
+    if (!micStream) {
       toast.warning("Recording without audio - microphone access denied");
       return screenStream;
     }
 
-    // Combine both streams
+    // Combine both streams if we have both
     const tracks = [
       ...screenStream.getVideoTracks(),
       ...micStream.getAudioTracks()
@@ -61,12 +82,6 @@ export const startScreenRecording = async () => {
     return new MediaStream(tracks);
   } catch (error: any) {
     console.error('Error starting recording:', error);
-    if (error.name === 'NotAllowedError') {
-      throw new Error("Screen sharing permission denied. Please allow access to continue.");
-    } else if (error.name === 'InvalidStateError') {
-      throw new Error("Another recording is already in progress. Please stop it first.");
-    } else {
-      throw new Error("Failed to start recording. Please try again.");
-    }
+    throw error;
   }
 };

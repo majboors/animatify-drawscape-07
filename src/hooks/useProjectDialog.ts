@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { requestScreenShare } from "@/utils/recordingUtils";
 
 interface UseProjectDialogProps {
   setIsRecording: (isRecording: boolean) => void;
@@ -22,6 +23,15 @@ export const useProjectDialog = ({
     }
 
     try {
+      // First request screen sharing permission
+      try {
+        await requestScreenShare();
+      } catch (permissionError: any) {
+        toast.error(permissionError.message);
+        return;
+      }
+
+      // If screen sharing is allowed, create the project
       const { data, error } = await supabase
         .from('projects')
         .insert([{ name: projectName }])
@@ -32,17 +42,16 @@ export const useProjectDialog = ({
 
       setCurrentProjectId(data.id);
       
-      // Start recording immediately after project creation
+      // Start recording after permissions and project creation
       try {
         await startRecording();
         setProjectName("");
+        toast.success("Project created and recording started");
       } catch (recordingError: any) {
         console.error('Error starting recording:', recordingError);
-        toast.error(recordingError.message || "Failed to start recording. Please check permissions.");
+        toast.error(recordingError.message || "Failed to start recording");
         return;
       }
-      
-      toast.success("Project created and recording started");
     } catch (error) {
       console.error('Error creating project:', error);
       toast.error("Failed to create project");
