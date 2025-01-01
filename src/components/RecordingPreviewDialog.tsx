@@ -84,7 +84,7 @@ export const RecordingPreviewDialog = ({
         .insert({
           project_id: projectId,
           name: `Recording ${new Date().toLocaleString()}`,
-          video_data: publicUrl
+          video_data: publicUrl // Store the actual URL instead of blob data
         })
         .select()
         .single();
