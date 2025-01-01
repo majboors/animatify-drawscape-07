@@ -4,13 +4,12 @@ import { supabase } from "@/integrations/supabase/client";
 import { RecordingPreviewDialog } from "./RecordingPreviewDialog";
 
 interface ScreenRecorderProps {
-  projectId?: string;
+  projectId?: string | null;
 }
 
 export const ScreenRecorder = forwardRef(({ projectId }: ScreenRecorderProps, ref) => {
   const [isRecording, setIsRecording] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
-  const [videoUrl, setVideoUrl] = useState<string | null>(null);
   const [videoBlob, setVideoBlob] = useState<Blob | null>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
@@ -45,7 +44,7 @@ export const ScreenRecorder = forwardRef(({ projectId }: ScreenRecorderProps, re
         streamRef.current = combinedStream;
         
         const mediaRecorder = new MediaRecorder(combinedStream, {
-          mimeType: 'video/mp4'
+          mimeType: 'video/webm;codecs=vp8,opus'
         });
         
         mediaRecorderRef.current = mediaRecorder;
@@ -60,7 +59,7 @@ export const ScreenRecorder = forwardRef(({ projectId }: ScreenRecorderProps, re
 
         mediaRecorder.onstop = async () => {
           console.log("Recording stopped, processing...");
-          const blob = new Blob(chunksRef.current, { type: 'video/mp4' });
+          const blob = new Blob(chunksRef.current, { type: 'video/webm' });
           setVideoBlob(blob);
           setShowPreview(true);
 
@@ -81,10 +80,14 @@ export const ScreenRecorder = forwardRef(({ projectId }: ScreenRecorderProps, re
         toast.error("Failed to start recording");
       }
     },
-    stopRecording: () => {
+    stopRecording: (callback?: (blob: Blob) => void) => {
       if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
         mediaRecorderRef.current.stop();
         setIsRecording(false);
+        if (callback && chunksRef.current.length > 0) {
+          const blob = new Blob(chunksRef.current, { type: 'video/webm' });
+          callback(blob);
+        }
       }
     },
     pauseRecording: () => {
