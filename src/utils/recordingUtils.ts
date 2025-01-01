@@ -12,9 +12,17 @@ export const saveRecordingToDatabase = async (
     console.log("[recordingUtils] Recording name:", recordingName);
     console.log("[recordingUtils] Video size:", videoBlob.size, "bytes");
 
-    // Convert Blob to ArrayBuffer
-    const arrayBuffer = await videoBlob.arrayBuffer();
-    const uint8Array = new Uint8Array(arrayBuffer);
+    // Convert Blob to Base64 string
+    const base64String = await new Promise<string>((resolve) => {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const base64 = reader.result as string;
+        // Remove the data URL prefix (e.g., "data:video/webm;base64,")
+        const base64Data = base64.split(',')[1];
+        resolve(base64Data);
+      };
+      reader.readAsDataURL(videoBlob);
+    });
 
     console.log("[recordingUtils] Saving to database...");
     const { data, error } = await supabase
@@ -22,7 +30,7 @@ export const saveRecordingToDatabase = async (
       .insert({
         project_id: projectId,
         name: recordingName,
-        video_data: uint8Array,
+        video_data: base64String,
       })
       .select()
       .single();
