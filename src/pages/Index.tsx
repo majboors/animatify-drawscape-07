@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Toolbar } from "@/components/Toolbar";
 import { Canvas, CanvasRef } from "@/components/Canvas";
 import { ProjectSidebar } from "@/components/ProjectSidebar";
@@ -15,6 +15,7 @@ const Index = () => {
   const [isPaused, setIsPaused] = useState(false);
   const [isVideoSidebarOpen, setIsVideoSidebarOpen] = useState(false);
   const [currentRecordingId, setCurrentRecordingId] = useState<string | null>(null);
+  const canvasRef = useRef<CanvasRef>(null);
 
   return (
     <div className="h-screen flex flex-col">
@@ -28,6 +29,7 @@ const Index = () => {
         onFontChange={setActiveFont}
       />
       <Canvas
+        ref={canvasRef}
         activeTool={activeTool}
         activeColor={activeColor}
         activeFont={activeFont}
@@ -42,8 +44,8 @@ const Index = () => {
       <CameraControls
         onToggleSidebar={() => setIsVideoSidebarOpen(!isVideoSidebarOpen)}
         onSaveBoard={async () => {
-          if (currentRecordingId) {
-            await saveBoardState(currentRecordingId);
+          if (canvasRef.current && currentRecordingId) {
+            await saveBoardState(canvasRef.current, currentRecordingId);
           }
         }}
         isRecording={isRecording}
