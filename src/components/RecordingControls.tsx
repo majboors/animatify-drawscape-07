@@ -1,9 +1,10 @@
 import { Button } from "./ui/button";
-import { Video, Play, Pause, Save, Square } from "lucide-react";
+import { Video, Play, Pause, Save, Square, X } from "lucide-react";
 import { toast } from "sonner";
 import { ProjectDialog } from "./ProjectDialog";
 import { useState, useRef } from "react";
 import { ScreenRecorder } from "./ScreenRecorder";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "./ui/alert-dialog";
 
 interface RecordingControlsProps {
   isRecording: boolean;
@@ -30,6 +31,7 @@ export const RecordingControls = ({
       console.log("[RecordingControls] Stop recording clicked");
       if (screenRecorderRef.current) {
         screenRecorderRef.current.stopRecording();
+        toast.success("Recording stopped successfully");
       }
       onRecordingClick();
     }
@@ -40,6 +42,7 @@ export const RecordingControls = ({
     console.log("[RecordingControls] Project selected, starting recording with ID:", projectId);
     if (screenRecorderRef.current) {
       screenRecorderRef.current.startRecording();
+      toast.success("Recording started successfully");
     }
     onRecordingClick();
   };
@@ -49,8 +52,10 @@ export const RecordingControls = ({
     if (screenRecorderRef.current) {
       if (isPaused) {
         screenRecorderRef.current.resumeRecording();
+        toast.success("Recording resumed");
       } else {
         screenRecorderRef.current.pauseRecording();
+        toast.success("Recording paused");
       }
     }
     onPauseResume();
@@ -60,6 +65,14 @@ export const RecordingControls = ({
     console.log("[RecordingControls] Save button clicked");
     onSaveBoard();
     toast.success("Board saved successfully");
+  };
+
+  const handleStopRecording = () => {
+    if (screenRecorderRef.current) {
+      screenRecorderRef.current.stopRecording();
+      toast.success("Recording stopped successfully");
+    }
+    onRecordingClick();
   };
 
   return (
@@ -96,6 +109,30 @@ export const RecordingControls = ({
           <Pause className="h-4 w-4" />
         )}
       </Button>
+
+      {isRecording && (
+        <AlertDialog>
+          <AlertDialogTrigger asChild>
+            <Button variant="outline" size="icon">
+              <X className="h-4 w-4" />
+            </Button>
+          </AlertDialogTrigger>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Stop Recording?</AlertDialogTitle>
+              <AlertDialogDescription>
+                Are you sure you want to stop the recording? This action cannot be undone.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction onClick={handleStopRecording}>
+                Stop Recording
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      )}
 
       <ScreenRecorder ref={screenRecorderRef} />
 

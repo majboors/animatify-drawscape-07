@@ -68,16 +68,25 @@ export const ScreenRecorder = forwardRef((props, ref) => {
 
         mediaRecorder.start(1000); // Collect data every second
         setIsRecording(true);
-        toast.success("Recording started");
       } catch (error) {
         console.error("Recording setup error:", error);
         toast.error("Failed to start recording");
       }
     },
     stopRecording: () => {
-      if (mediaRecorderRef.current && isRecording) {
+      if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
         mediaRecorderRef.current.stop();
         setIsRecording(false);
+      }
+    },
+    pauseRecording: () => {
+      if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
+        mediaRecorderRef.current.pause();
+      }
+    },
+    resumeRecording: () => {
+      if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'paused') {
+        mediaRecorderRef.current.resume();
       }
     }
   }));
