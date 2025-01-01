@@ -8,8 +8,7 @@ export const useImageHandler = (fabricCanvas: FabricCanvas | null) => {
     Image.fromURL(
       url,
       {
-        crossOrigin: 'anonymous',
-        objectCaching: false
+        crossOrigin: 'anonymous'
       }
     ).then((img) => {
       // Scale image to fit within canvas while maintaining aspect ratio
