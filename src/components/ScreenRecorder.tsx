@@ -3,7 +3,11 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { RecordingPreviewDialog } from "./RecordingPreviewDialog";
 
-export const ScreenRecorder = forwardRef((props, ref) => {
+interface ScreenRecorderProps {
+  projectId?: string;
+}
+
+export const ScreenRecorder = forwardRef(({ projectId }: ScreenRecorderProps, ref) => {
   const [isRecording, setIsRecording] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
   const [videoUrl, setVideoUrl] = useState<string | null>(null);
@@ -102,6 +106,7 @@ export const ScreenRecorder = forwardRef((props, ref) => {
       isOpen={showPreview}
       onOpenChange={setShowPreview}
       videoBlob={videoBlob}
+      projectId={projectId}
     />
   );
 });

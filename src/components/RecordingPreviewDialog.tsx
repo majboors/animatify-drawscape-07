@@ -10,7 +10,7 @@ interface RecordingPreviewDialogProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
   videoBlob: Blob | null;
-  projectId?: string | null;
+  projectId?: string;
 }
 
 export const RecordingPreviewDialog = ({
