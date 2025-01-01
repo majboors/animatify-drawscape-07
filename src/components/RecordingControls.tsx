@@ -171,7 +171,7 @@ export const RecordingControls = ({
         projectId={currentProjectId}
       />
 
-      <ScreenRecorder ref={screenRecorderRef} />
+      <ScreenRecorder ref={screenRecorderRef} projectId={currentProjectId} />
     </>
   );
 };
