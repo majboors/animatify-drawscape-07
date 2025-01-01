@@ -46,27 +46,34 @@ export const RecordingControls = ({
 
   const handlePauseResumeClick = () => {
     console.log("[RecordingControls] Pause/Resume button clicked", { isPaused });
+    if (screenRecorderRef.current) {
+      if (isPaused) {
+        screenRecorderRef.current.resumeRecording();
+      } else {
+        screenRecorderRef.current.pauseRecording();
+      }
+    }
     onPauseResume();
   };
 
   const handleSaveClick = () => {
     console.log("[RecordingControls] Save button clicked");
     onSaveBoard();
+    toast.success("Board saved successfully");
   };
 
   return (
     <div className="flex gap-2">
-      {isRecording && (
-        <Button
-          variant="destructive"
-          size="sm"
-          onClick={handleSaveClick}
-          className="mr-2"
-        >
-          <Save className="h-4 w-4 mr-1" />
-          Save Board
-        </Button>
-      )}
+      <Button
+        variant="destructive"
+        size="sm"
+        onClick={handleSaveClick}
+        disabled={!isRecording}
+        className="mr-2"
+      >
+        <Save className="h-4 w-4 mr-1" />
+        Save Board
+      </Button>
 
       <Button
         variant="outline"
