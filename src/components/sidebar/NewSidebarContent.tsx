@@ -19,11 +19,14 @@ export const NewSidebarContent = ({ onOutputChange }: NewSidebarContentProps) =>
   const [language, setLanguage] = useState("python");
   const [filename, setFilename] = useState("test.py");
   const [code, setCode] = useState("");
+  const [output, setOutput] = useState("");
 
   const handleRun = async () => {
     try {
       toast.info("This is a demo. In production, this would execute the code.");
-      onOutputChange(`Demo output for: ${filename}`);
+      const demoOutput = `Demo output for: ${filename}`;
+      setOutput(demoOutput);
+      onOutputChange(demoOutput);
     } catch (error) {
       toast.error("Failed to execute code");
     }
