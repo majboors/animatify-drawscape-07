@@ -19,6 +19,8 @@ export const useRecording = ({
 }: UseRecordingProps) => {
   const [currentProjectId, setCurrentProjectId] = useState<string | null>(null);
   const [showProjectDialog, setShowProjectDialog] = useState(false);
+  const [showPreviewDialog, setShowPreviewDialog] = useState(false);
+  const [previewVideoUrl, setPreviewVideoUrl] = useState<string | null>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
   const [previewStream, setPreviewStream] = useState<MediaStream | null>(null);
@@ -63,11 +65,17 @@ export const useRecording = ({
           
           if (currentProjectId) {
             try {
-              await saveRecordingToDatabase(
+              const recordingData = await saveRecordingToDatabase(
                 currentProjectId,
                 `Recording ${new Date().toISOString()}`,
                 blob
               );
+              
+              if (recordingData?.video_data) {
+                setPreviewVideoUrl(recordingData.video_data);
+                setShowPreviewDialog(true);
+              }
+              
               chunksRef.current = [];
             } catch (error) {
               console.error("[useRecording] Error saving recording:", error);
@@ -158,6 +166,9 @@ export const useRecording = ({
     startRecording,
     showProjectDialog,
     setShowProjectDialog,
+    showPreviewDialog,
+    setShowPreviewDialog,
+    previewVideoUrl,
     previewStream,
     setPreviewStream,
   };
