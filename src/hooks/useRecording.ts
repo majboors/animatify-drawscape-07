@@ -48,7 +48,7 @@ export const useRecording = ({
 
       recorder.onstop = async () => {
         if (currentProjectId && recordedChunks.length > 0) {
-          const blob = new Blob(recordedChunks, { type: "video/mp4" });
+          const blob = new Blob(recordedChunks, { type: "video/webm" });
           const reader = new FileReader();
           
           reader.onloadend = async () => {
@@ -61,6 +61,7 @@ export const useRecording = ({
                   reader.result
                 );
                 console.log("Recording saved successfully:", result);
+                setRecordedChunks([]); // Clear chunks after successful save
               } catch (error) {
                 console.error("Error saving recording:", error);
                 toast.error("Failed to save recording");
@@ -127,7 +128,7 @@ export const useRecording = ({
     if (mediaRecorder && mediaRecorder.state === 'recording') {
       mediaRecorder.stop(); // This will trigger the onstop event which saves the recording
     } else if (recordedChunks.length > 0) {
-      const blob = new Blob(recordedChunks, { type: "video/mp4" });
+      const blob = new Blob(recordedChunks, { type: "video/webm" });
       const reader = new FileReader();
       
       reader.onloadend = async () => {
@@ -140,7 +141,7 @@ export const useRecording = ({
               reader.result
             );
             console.log("Recording saved successfully:", result);
-            setRecordedChunks([]); // Clear the chunks after successful save
+            setRecordedChunks([]); // Clear chunks after successful save
           } catch (error) {
             console.error("Error saving recording:", error);
             toast.error("Failed to save recording");

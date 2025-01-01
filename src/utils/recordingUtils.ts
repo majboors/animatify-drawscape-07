@@ -10,7 +10,7 @@ export const saveRecordingToDatabase = async (
     console.log("Starting video upload process...");
     
     // Convert base64 to blob
-    const base64Data = videoData.split(',')[1]; // Remove data URL prefix if present
+    const base64Data = videoData.split(',')[1]; // Remove data URL prefix
     const byteCharacters = atob(base64Data);
     const byteArrays = [];
     
@@ -24,18 +24,18 @@ export const saveRecordingToDatabase = async (
       byteArrays.push(byteArray);
     }
     
-    const blob = new Blob(byteArrays, { type: 'video/mp4' });
+    const blob = new Blob(byteArrays, { type: 'video/webm' });
     console.log("Blob created:", blob.size, "bytes");
 
     // Generate unique filename
-    const fileName = `${Date.now()}-${recordingName}.mp4`;
+    const fileName = `${Date.now()}-${recordingName}.webm`;
     console.log("Uploading file:", fileName);
 
     // Upload to storage bucket
     const { data: uploadData, error: uploadError } = await supabase.storage
       .from('videos')
       .upload(fileName, blob, {
-        cacheControl: '3600',
+        contentType: 'video/webm',
         upsert: false
       });
 
