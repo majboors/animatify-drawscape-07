@@ -1,3 +1,5 @@
+import { supabase } from "@/integrations/supabase/client";
+
 export const startScreenRecording = async () => {
   try {
     // Get microphone audio stream
