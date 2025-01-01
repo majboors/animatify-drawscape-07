@@ -10,7 +10,7 @@ export const saveRecordingToDatabase = async (
     console.log("Starting video upload process...");
     
     // Convert base64 to blob
-    const base64Data = videoData.split(',')[1]; // Remove data URL prefix
+    const base64Data = videoData.split(',')[1];
     const byteCharacters = atob(base64Data);
     const byteArrays = [];
     
@@ -71,11 +71,9 @@ export const saveRecordingToDatabase = async (
     }
 
     console.log('Recording saved in database:', recordingData);
-    toast.success("Recording saved successfully!");
     return recordingData;
   } catch (error) {
     console.error('Error in saveRecordingToDatabase:', error);
-    toast.error("Failed to save recording");
     throw error;
   }
 };
