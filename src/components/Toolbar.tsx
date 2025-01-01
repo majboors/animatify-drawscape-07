@@ -9,12 +9,14 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { fontFamilies } from "@/utils/textUtils";
+import { RecordingControls } from "./RecordingControls";
 
 interface ToolbarProps {
   activeTool: string;
   activeColor: string;
   activeFont?: string;
   isRecording?: boolean;
+  isPaused?: boolean;
   onToolChange: (tool: string) => void;
   onColorChange: (color: string) => void;
   onFontChange?: (font: string) => void;
@@ -23,6 +25,8 @@ interface ToolbarProps {
   onGroup?: () => void;
   onUngroup?: () => void;
   onSaveBoard?: () => void;
+  onRecordingClick?: () => void;
+  onPauseResume?: () => void;
 }
 
 export const Toolbar = ({ 
@@ -30,6 +34,7 @@ export const Toolbar = ({
   activeColor, 
   activeFont,
   isRecording = false,
+  isPaused = false,
   onToolChange, 
   onColorChange,
   onFontChange,
@@ -37,7 +42,9 @@ export const Toolbar = ({
   onPaste,
   onGroup,
   onUngroup,
-  onSaveBoard
+  onSaveBoard = () => {},
+  onRecordingClick = () => {},
+  onPauseResume = () => {},
 }: ToolbarProps) => {
   const tools = [
     { id: "select", icon: MousePointer, label: "Select" },
@@ -96,78 +103,77 @@ export const Toolbar = ({
   const colors = ["#0078D4", "#2B579A", "#666666", "#E74C3C", "#2ECC71", "#F1C40F"];
 
   return (
-    <div className="bg-white border-b border-gray-200 p-2 flex items-center space-x-2">
-      {isRecording && (
-        <Button
-          variant="destructive"
-          size="sm"
-          onClick={onSaveBoard}
-          className="mr-2"
-        >
-          <Save className="h-4 w-4 mr-1" />
-          Save Board
-        </Button>
-      )}
-      <div className="flex space-x-1">
-        {tools.map((tool) => (
-          <Button
-            key={tool.id}
-            variant={activeTool === tool.id ? "default" : "outline"}
-            size="icon"
-            onClick={() => onToolChange(tool.id)}
-            className="w-10 h-10"
-          >
-            <tool.icon className="h-5 w-5" />
-          </Button>
-        ))}
+    <div className="bg-white border-b border-gray-200 p-2 flex items-center justify-between">
+      <div className="flex items-center space-x-2">
+        <div className="flex space-x-1">
+          {tools.map((tool) => (
+            <Button
+              key={tool.id}
+              variant={activeTool === tool.id ? "default" : "outline"}
+              size="icon"
+              onClick={() => onToolChange(tool.id)}
+              className="w-10 h-10"
+            >
+              <tool.icon className="h-5 w-5" />
+            </Button>
+          ))}
+        </div>
+        <div className="w-px h-8 bg-gray-200 mx-2" />
+        <div className="flex space-x-1">
+          {actions.map((action) => (
+            <Button
+              key={action.id}
+              variant="outline"
+              size="icon"
+              onClick={action.onClick}
+              className="w-10 h-10"
+            >
+              <action.icon className="h-5 w-5" />
+            </Button>
+          ))}
+        </div>
+        <div className="w-px h-8 bg-gray-200 mx-2" />
+        <div className="flex space-x-1">
+          {colors.map((color) => (
+            <button
+              key={color}
+              className={`w-8 h-8 rounded-full border-2 ${
+                activeColor === color ? "border-gray-900" : "border-gray-200"
+              }`}
+              style={{ backgroundColor: color }}
+              onClick={() => onColorChange(color)}
+            />
+          ))}
+        </div>
+        {activeTool === "text" && (
+          <>
+            <div className="w-px h-8 bg-gray-200 mx-2" />
+            <Select
+              value={activeFont}
+              onValueChange={onFontChange}
+            >
+              <SelectTrigger className="w-[180px]">
+                <SelectValue placeholder="Select font" />
+              </SelectTrigger>
+              <SelectContent>
+                {fontFamilies.map((font) => (
+                  <SelectItem key={font} value={font}>
+                    {font}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </>
+        )}
       </div>
-      <div className="w-px h-8 bg-gray-200 mx-2" />
-      <div className="flex space-x-1">
-        {actions.map((action) => (
-          <Button
-            key={action.id}
-            variant="outline"
-            size="icon"
-            onClick={action.onClick}
-            className="w-10 h-10"
-          >
-            <action.icon className="h-5 w-5" />
-          </Button>
-        ))}
-      </div>
-      <div className="w-px h-8 bg-gray-200 mx-2" />
-      <div className="flex space-x-1">
-        {colors.map((color) => (
-          <button
-            key={color}
-            className={`w-8 h-8 rounded-full border-2 ${
-              activeColor === color ? "border-gray-900" : "border-gray-200"
-            }`}
-            style={{ backgroundColor: color }}
-            onClick={() => onColorChange(color)}
-          />
-        ))}
-      </div>
-      {activeTool === "text" && (
-        <>
-          <div className="w-px h-8 bg-gray-200 mx-2" />
-          <Select
-            value={activeFont}
-            onValueChange={onFontChange}
-          >
-            <SelectTrigger className="w-[180px]">
-              <SelectValue placeholder="Select font" />
-            </SelectTrigger>
-            <SelectContent>
-              {fontFamilies.map((font) => (
-                <SelectItem key={font} value={font}>
-                  {font}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </>
-      )}
+      
+      <RecordingControls
+        isRecording={isRecording}
+        isPaused={isPaused}
+        onRecordingClick={onRecordingClick}
+        onPauseResume={onPauseResume}
+        onSaveBoard={onSaveBoard}
+      />
     </div>
   );
 };
