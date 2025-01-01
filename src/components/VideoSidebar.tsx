@@ -1,8 +1,7 @@
 import { useState, useEffect } from "react";
-import { Video, Trash2, Play, FolderKanban } from "lucide-react";
+import { Video, Trash2, Play, FolderKanban, X } from "lucide-react";
 import { Button } from "./ui/button";
 import { toast } from "sonner";
-import { loadBoardStates } from "@/utils/boardState";
 import { supabase } from "@/integrations/supabase/client";
 import { ProjectList } from "./project/ProjectList";
 import {
@@ -10,7 +9,14 @@ import {
   SheetContent,
   SheetHeader,
   SheetTitle,
+  SheetClose,
 } from "./ui/sheet";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "./ui/dialog";
 
 interface VideoSidebarProps {
   isOpen: boolean;
@@ -33,6 +39,7 @@ export const VideoSidebar = ({
   }>>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [videoUrl, setVideoUrl] = useState<string | null>(null);
+  const [showPreviewDialog, setShowPreviewDialog] = useState(false);
 
   useEffect(() => {
     if (selectedProject) {
@@ -44,7 +51,11 @@ export const VideoSidebar = ({
     try {
       setIsLoading(true);
       console.log("Loading recordings for project:", projectId);
-      const { data, error } = await supabase
+      const { data: storageData } = await supabase.storage
+        .from('videos')
+        .list();
+
+      const { data: recordingsData, error } = await supabase
         .from('recordings')
         .select('*')
         .eq('project_id', projectId)
@@ -52,9 +63,9 @@ export const VideoSidebar = ({
 
       if (error) throw error;
 
-      if (data) {
-        console.log("Recordings loaded:", data);
-        setRecordings(data);
+      if (recordingsData) {
+        console.log("Recordings loaded:", recordingsData);
+        setRecordings(recordingsData);
       } else {
         setRecordings([]);
       }
@@ -100,9 +111,12 @@ export const VideoSidebar = ({
       if (error) throw error;
 
       if (data?.video_data) {
-        const blob = new Blob([data.video_data], { type: 'video/webm' });
-        const url = URL.createObjectURL(blob);
-        setVideoUrl(url);
+        const { data: { publicUrl } } = supabase.storage
+          .from('videos')
+          .getPublicUrl(data.video_data);
+        
+        setVideoUrl(publicUrl);
+        setShowPreviewDialog(true);
       }
     } catch (error) {
       console.error('Error playing recording:', error);
@@ -113,68 +127,82 @@ export const VideoSidebar = ({
   };
 
   return (
-    <Sheet open={isOpen} onOpenChange={onOpenChange}>
-      <SheetContent side="left" className="w-[400px] sm:w-[540px]">
-        <SheetHeader>
-          <SheetTitle className="flex items-center gap-2">
-            <FolderKanban className="h-5 w-5" />
-            Projects & Recordings
-          </SheetTitle>
-        </SheetHeader>
-        
-        <div className="mt-4 space-y-4">
-          <ProjectList
-            selectedProject={selectedProject}
-            onSelectProject={setSelectedProject}
-          />
+    <>
+      <Sheet open={isOpen} onOpenChange={onOpenChange}>
+        <SheetContent side="left" className="w-[400px] sm:w-[540px]">
+          <SheetHeader className="flex flex-row items-center justify-between">
+            <SheetTitle className="flex items-center gap-2">
+              <FolderKanban className="h-5 w-5" />
+              Projects & Recordings
+            </SheetTitle>
+            <SheetClose asChild>
+              <Button variant="ghost" size="icon">
+                <X className="h-4 w-4" />
+              </Button>
+            </SheetClose>
+          </SheetHeader>
+          
+          <div className="mt-4 space-y-4">
+            <ProjectList
+              selectedProject={selectedProject}
+              onSelectProject={setSelectedProject}
+            />
 
-          {selectedProject && recordings.length > 0 && (
-            <div className="space-y-2">
-              <h3 className="font-medium">Recordings</h3>
-              <div className="space-y-1">
-                {recordings.map((recording) => (
-                  <div
-                    key={recording.id}
-                    className="flex items-center justify-between p-2 rounded-lg hover:bg-gray-100"
-                  >
-                    <span className="flex items-center gap-2">
-                      <Video className="h-4 w-4" />
-                      {recording.name}
-                    </span>
-                    <div className="flex items-center gap-2">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => playRecording(recording.id)}
-                      >
-                        <Play className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => deleteRecording(recording.id)}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
+            {selectedProject && recordings.length > 0 && (
+              <div className="space-y-2">
+                <h3 className="font-medium">Recordings</h3>
+                <div className="space-y-1">
+                  {recordings.map((recording) => (
+                    <div
+                      key={recording.id}
+                      className="flex items-center justify-between p-2 rounded-lg hover:bg-gray-100"
+                    >
+                      <span className="flex items-center gap-2">
+                        <Video className="h-4 w-4" />
+                        {recording.name}
+                      </span>
+                      <div className="flex items-center gap-2">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => playRecording(recording.id)}
+                        >
+                          <Play className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => deleteRecording(recording.id)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
-            </div>
-          )}
+            )}
+          </div>
+        </SheetContent>
+      </Sheet>
 
+      <Dialog open={showPreviewDialog} onOpenChange={setShowPreviewDialog}>
+        <DialogContent className="sm:max-w-[80vw]">
+          <DialogHeader>
+            <DialogTitle>Recording Preview</DialogTitle>
+          </DialogHeader>
           {videoUrl && (
             <div className="mt-4">
               <video
                 src={videoUrl}
                 controls
                 className="w-full rounded-lg"
-                onEnded={() => setVideoUrl(null)}
+                onEnded={() => setShowPreviewDialog(false)}
               />
             </div>
           )}
-        </div>
-      </SheetContent>
-    </Sheet>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 };
