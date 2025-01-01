@@ -1,9 +1,10 @@
 import { useEffect, useRef, useState, forwardRef, useImperativeHandle } from "react";
-import { Canvas as FabricCanvas, IText, Object as FabricObject, PencilBrush, util, Image } from "fabric";
+import { Canvas as FabricCanvas, IText, Object as FabricObject, PencilBrush, util } from "fabric";
 import { toast } from "sonner";
 import { ExtendedCanvas } from "../types/fabric";
 import { useShapeCreation } from "../hooks/useShapeCreation";
 import { useCanvasEvents } from "../hooks/useCanvasEvents";
+import { useImageHandler } from "../hooks/useImageHandler";
 
 interface CanvasProps {
   activeTool: string;
@@ -17,7 +18,7 @@ export interface CanvasRef {
   group: () => void;
   ungroup: () => void;
   getFabricCanvas: () => ExtendedCanvas | null;
-  toJSON: () => any; // Add the missing toJSON method
+  toJSON: () => any;
 }
 
 export const Canvas = forwardRef<CanvasRef, CanvasProps>(({ activeTool, activeColor, activeFont }, ref) => {
@@ -28,6 +29,7 @@ export const Canvas = forwardRef<CanvasRef, CanvasProps>(({ activeTool, activeCo
   // Use custom hooks
   useShapeCreation(fabricCanvas, activeTool, activeColor);
   useCanvasEvents(fabricCanvas, activeTool, activeColor, activeFont);
+  const { handleImageUpload } = useImageHandler(fabricCanvas);
 
   const handleGroup = () => {
     if (!fabricCanvas) return;
@@ -104,7 +106,7 @@ export const Canvas = forwardRef<CanvasRef, CanvasProps>(({ activeTool, activeCo
     group: handleGroup,
     ungroup: handleUngroup,
     getFabricCanvas: () => fabricCanvas,
-    toJSON: () => fabricCanvas?.toJSON() // Implement the toJSON method
+    toJSON: () => fabricCanvas?.toJSON()
   }));
 
   useEffect(() => {
@@ -193,30 +195,6 @@ export const Canvas = forwardRef<CanvasRef, CanvasProps>(({ activeTool, activeCo
       fabricCanvas.requestRenderAll();
     }
   }, [activeTool, activeColor, activeFont, fabricCanvas]);
-
-  const handleImageUpload = (url: string) => {
-    if (!fabricCanvas) return;
-
-    Image.fromURL(url, (img) => {
-      // Scale image to fit within canvas while maintaining aspect ratio
-      const canvasWidth = fabricCanvas.width || window.innerWidth;
-      const canvasHeight = fabricCanvas.height || window.innerHeight - 100;
-      const scale = Math.min(
-        (canvasWidth * 0.5) / img.width!,
-        (canvasHeight * 0.5) / img.height!
-      );
-
-      img.scale(scale);
-      img.set({
-        left: (canvasWidth - img.width! * scale) / 2,
-        top: (canvasHeight - img.height! * scale) / 2
-      });
-
-      fabricCanvas.add(img);
-      fabricCanvas.setActiveObject(img);
-      fabricCanvas.requestRenderAll();
-    });
-  };
 
   return (
     <div className="w-full h-[calc(100vh-64px)] bg-gray-50 overflow-hidden">
