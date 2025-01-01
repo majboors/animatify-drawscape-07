@@ -37,18 +37,24 @@ export const useRecording = ({
       
       recorder.ondataavailable = (event) => {
         if (event.data.size > 0) {
+          console.log("Received data chunk of size:", event.data.size);
           setRecordedChunks(prev => [...prev, event.data]);
         }
       };
 
       recorder.onstart = () => {
+        console.log("Recording started");
         setIsRecording(true);
         toast.success("Recording started");
       };
 
       recorder.onstop = () => {
-        console.log("Recording stopped, preparing to save...");
-        handleSaveRecording();
+        console.log("Recording stopped");
+        setIsRecording(false);
+        if (recordedChunks.length > 0) {
+          console.log("Total chunks recorded:", recordedChunks.length);
+          handleSaveRecording();
+        }
       };
 
       recorder.onpause = () => {
@@ -62,22 +68,37 @@ export const useRecording = ({
       };
 
       setMediaRecorder(recorder);
-      recorder.start(1000);
+      recorder.start(1000); // Collect data every second
+      console.log("MediaRecorder started");
     } catch (error) {
       console.error('Error in startRecording:', error);
       toast.error("Failed to start recording. Please try again.");
       throw error;
     }
-  }, [setIsRecording, setIsPaused]);
+  }, [setIsRecording, setIsPaused, recordedChunks]);
 
   const handleSaveRecording = async () => {
     console.log("Handling save recording...");
-    if (currentProjectId && recordedChunks.length > 0) {
+    if (!currentProjectId) {
+      console.error("No project ID available");
+      toast.error("No project selected");
+      return;
+    }
+    
+    if (recordedChunks.length === 0) {
+      console.error("No recording chunks available");
+      toast.error("No recording data available");
+      return;
+    }
+
+    try {
+      console.log("Creating blob from chunks...");
       const blob = new Blob(recordedChunks, { type: "video/webm" });
+      console.log("Blob size:", blob.size);
+
       const reader = new FileReader();
-      
       reader.onloadend = async () => {
-        if (reader.result && typeof reader.result === 'string' && currentProjectId) {
+        if (reader.result && typeof reader.result === 'string') {
           console.log("Converting recording to base64...");
           try {
             const result = await saveRecordingToDatabase(
@@ -96,8 +117,9 @@ export const useRecording = ({
       };
 
       reader.readAsDataURL(blob);
-    } else {
-      console.log("No recording data to save or no project ID");
+    } catch (error) {
+      console.error("Error in handleSaveRecording:", error);
+      toast.error("Failed to process recording");
     }
   };
 
@@ -112,13 +134,13 @@ export const useRecording = ({
       }
     } else {
       if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+        console.log("Stopping recording...");
         mediaRecorder.stop();
         const tracks = mediaRecorder.stream.getTracks();
         tracks.forEach(track => track.stop());
         setIsRecording(false);
         setIsPaused(false);
         setPreviewStream(null);
-        toast.success("Recording stopped");
       }
     }
   };
