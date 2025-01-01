@@ -50,7 +50,6 @@ export const VideoListItem = ({ recording, onPlay, onDelete }: VideoListItemProp
       {recording.video_data && (
         <>
           <video
-            src={recording.video_data}
             className="w-full rounded-lg border h-32 object-cover"
             preload="metadata"
             controls
