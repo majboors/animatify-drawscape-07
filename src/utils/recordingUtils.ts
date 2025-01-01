@@ -54,7 +54,9 @@ export const saveRecordingToStorage = async (
     console.log("[recordingUtils] Video size:", videoBlob.size, "bytes");
 
     // Create a unique file path
-    const filePath = `${projectId}/${Date.now()}-${crypto.randomUUID()}.webm`;
+    const timestamp = Date.now();
+    const uuid = crypto.randomUUID();
+    const filePath = `${projectId}/${timestamp}-${uuid}.webm`;
     console.log("[recordingUtils] Uploading to storage path:", filePath);
 
     // Upload to storage bucket
@@ -80,7 +82,9 @@ export const saveRecordingToStorage = async (
       .from('videos')
       .getPublicUrl(filePath);
 
-    console.log("[recordingUtils] Public URL:", publicUrl);
+    // Ensure the URL is properly decoded
+    const decodedUrl = decodeURIComponent(publicUrl);
+    console.log("[recordingUtils] Public URL:", decodedUrl);
 
     // Save recording metadata to database
     const { data, error } = await supabase
@@ -88,7 +92,7 @@ export const saveRecordingToStorage = async (
       .insert({
         project_id: projectId,
         name: recordingName,
-        video_data: publicUrl
+        video_data: decodedUrl
       })
       .select()
       .single();
