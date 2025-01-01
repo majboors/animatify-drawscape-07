@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Video, Trash2, Play, FolderKanban, X } from "lucide-react";
+import { FolderKanban, X } from "lucide-react";
 import { Button } from "./ui/button";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -11,12 +11,8 @@ import {
   SheetTitle,
   SheetClose,
 } from "./ui/sheet";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "./ui/dialog";
+import { VideoPreviewDialog } from "./video/VideoPreviewDialog";
+import { VideoListItem } from "./video/VideoListItem";
 
 interface VideoSidebarProps {
   isOpen: boolean;
@@ -42,19 +38,16 @@ export const VideoSidebar = ({
   const [showPreviewDialog, setShowPreviewDialog] = useState(false);
 
   useEffect(() => {
-    if (selectedProject) {
+    if (selectedProject && isOpen) {
       loadRecordings(selectedProject);
     }
-  }, [selectedProject]);
+  }, [selectedProject, isOpen]);
 
   const loadRecordings = async (projectId: string) => {
     try {
       setIsLoading(true);
       console.log("Loading recordings for project:", projectId);
-      const { data: storageData } = await supabase.storage
-        .from('videos')
-        .list();
-
+      
       const { data: recordingsData, error } = await supabase
         .from('recordings')
         .select('*')
@@ -63,12 +56,8 @@ export const VideoSidebar = ({
 
       if (error) throw error;
 
-      if (recordingsData) {
-        console.log("Recordings loaded:", recordingsData);
-        setRecordings(recordingsData);
-      } else {
-        setRecordings([]);
-      }
+      console.log("Recordings loaded:", recordingsData);
+      setRecordings(recordingsData || []);
     } catch (error) {
       console.error('Error loading recordings:', error);
       toast.error("Failed to load recordings");
@@ -111,11 +100,7 @@ export const VideoSidebar = ({
       if (error) throw error;
 
       if (data?.video_data) {
-        const { data: { publicUrl } } = supabase.storage
-          .from('videos')
-          .getPublicUrl(data.video_data);
-        
-        setVideoUrl(publicUrl);
+        setVideoUrl(data.video_data);
         setShowPreviewDialog(true);
       }
     } catch (error) {
@@ -153,31 +138,12 @@ export const VideoSidebar = ({
                 <h3 className="font-medium">Recordings</h3>
                 <div className="space-y-1">
                   {recordings.map((recording) => (
-                    <div
+                    <VideoListItem
                       key={recording.id}
-                      className="flex items-center justify-between p-2 rounded-lg hover:bg-gray-100"
-                    >
-                      <span className="flex items-center gap-2">
-                        <Video className="h-4 w-4" />
-                        {recording.name}
-                      </span>
-                      <div className="flex items-center gap-2">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => playRecording(recording.id)}
-                        >
-                          <Play className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => deleteRecording(recording.id)}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </div>
+                      recording={recording}
+                      onPlay={playRecording}
+                      onDelete={deleteRecording}
+                    />
                   ))}
                 </div>
               </div>
@@ -186,23 +152,11 @@ export const VideoSidebar = ({
         </SheetContent>
       </Sheet>
 
-      <Dialog open={showPreviewDialog} onOpenChange={setShowPreviewDialog}>
-        <DialogContent className="sm:max-w-[80vw]">
-          <DialogHeader>
-            <DialogTitle>Recording Preview</DialogTitle>
-          </DialogHeader>
-          {videoUrl && (
-            <div className="mt-4">
-              <video
-                src={videoUrl}
-                controls
-                className="w-full rounded-lg"
-                onEnded={() => setShowPreviewDialog(false)}
-              />
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
+      <VideoPreviewDialog
+        isOpen={showPreviewDialog}
+        onOpenChange={setShowPreviewDialog}
+        videoUrl={videoUrl}
+      />
     </>
   );
 };
