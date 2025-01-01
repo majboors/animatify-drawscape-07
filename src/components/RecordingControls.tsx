@@ -82,7 +82,7 @@ export const RecordingControls = ({
         <Button
           variant={isRecording ? "destructive" : "outline"}
           size="icon"
-          onClick={handleRecordClick}
+          onClick={isRecording ? handleStopRecording : handleRecordClick}
           className={isRecording ? "bg-red-500 text-white hover:bg-red-600" : ""}
         >
           {isRecording ? <Square className="h-4 w-4" /> : <Video className="h-4 w-4" />}
