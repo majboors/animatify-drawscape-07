@@ -1,6 +1,6 @@
 import { useState, useRef, forwardRef, useImperativeHandle } from 'react';
 import { toast } from "sonner";
-import { startScreenRecording } from "@/utils/mediaUtils";
+import { supabase } from "@/integrations/supabase/client";
 import { RecordingPreviewDialog } from "./RecordingPreviewDialog";
 
 export const ScreenRecorder = forwardRef((props, ref) => {
@@ -16,7 +16,28 @@ export const ScreenRecorder = forwardRef((props, ref) => {
     startRecording: async () => {
       try {
         console.log("Starting recording setup...");
-        const combinedStream = await startScreenRecording();
+        const audioStream = await navigator.mediaDevices.getUserMedia({
+          audio: {
+            echoCancellation: true,
+            noiseSuppression: true
+          }
+        });
+
+        const displayStream = await navigator.mediaDevices.getDisplayMedia({
+          video: { 
+            width: { ideal: 1920 },
+            height: { ideal: 1080 }
+          },
+          audio: true
+        });
+
+        const tracks = [
+          ...displayStream.getVideoTracks(),
+          ...displayStream.getAudioTracks(),
+          ...audioStream.getAudioTracks()
+        ];
+
+        const combinedStream = new MediaStream(tracks);
         streamRef.current = combinedStream;
         
         const mediaRecorder = new MediaRecorder(combinedStream, {
@@ -36,12 +57,9 @@ export const ScreenRecorder = forwardRef((props, ref) => {
         mediaRecorder.onstop = async () => {
           console.log("Recording stopped, processing...");
           const blob = new Blob(chunksRef.current, { type: 'video/webm' });
-          const url = URL.createObjectURL(blob);
-          setVideoUrl(url);
           setVideoBlob(blob);
           setShowPreview(true);
 
-          // Cleanup streams
           if (streamRef.current) {
             streamRef.current.getTracks().forEach(track => {
               track.stop();
@@ -51,7 +69,7 @@ export const ScreenRecorder = forwardRef((props, ref) => {
           }
         };
 
-        mediaRecorder.start(1000); // Collect data every second
+        mediaRecorder.start(1000);
         setIsRecording(true);
         toast.success("Recording started");
       } catch (error) {
@@ -83,7 +101,6 @@ export const ScreenRecorder = forwardRef((props, ref) => {
     <RecordingPreviewDialog
       isOpen={showPreview}
       onOpenChange={setShowPreview}
-      videoUrl={videoUrl}
       videoBlob={videoBlob}
     />
   );

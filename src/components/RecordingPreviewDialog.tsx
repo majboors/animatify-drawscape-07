@@ -1,70 +1,47 @@
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from "@/components/ui/dialog";
+import { useState } from "react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Copy, Save } from "lucide-react";
 import { toast } from "sonner";
-import { ProjectDialog } from "./ProjectDialog";
-import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
 interface RecordingPreviewDialogProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
-  videoUrl: string | null;
   videoBlob: Blob | null;
 }
 
 export const RecordingPreviewDialog = ({
   isOpen,
   onOpenChange,
-  videoUrl,
-  videoBlob,
+  videoBlob
 }: RecordingPreviewDialogProps) => {
-  const [showProjectDialog, setShowProjectDialog] = useState(false);
+  const [videoUrl, setVideoUrl] = useState<string | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
 
-  const handleCopyUrl = () => {
-    if (videoUrl) {
-      navigator.clipboard.writeText(videoUrl);
-      toast.success("URL copied to clipboard");
-    }
-  };
-
-  const handleSaveRecording = () => {
-    setShowProjectDialog(true);
-  };
-
-  const handleProjectCreated = async (projectId: string) => {
+  const handleSaveRecording = async () => {
     if (!videoBlob) {
-      toast.error("No recording available");
+      toast.error("No recording to save");
       return;
     }
 
+    setIsUploading(true);
     try {
       console.log("Starting video upload process...");
-      
-      // Create a unique filename
       const timestamp = Date.now();
-      const filePath = `${projectId}/${timestamp}.webm`;
+      const filePath = `recording-${timestamp}.webm`;
 
       console.log("Uploading video to storage bucket...");
-
-      // Upload to Supabase storage bucket
       const { data: uploadData, error: uploadError } = await supabase.storage
         .from('videos')
         .upload(filePath, videoBlob, {
           contentType: 'video/webm',
-          cacheControl: '3600',
-          upsert: false
+          cacheControl: '3600'
         });
 
       if (uploadError) {
-        console.error("Storage upload error:", uploadError);
+        console.error("Upload error:", uploadError);
         throw uploadError;
       }
 
@@ -73,81 +50,67 @@ export const RecordingPreviewDialog = ({
         .from('videos')
         .getPublicUrl(filePath);
 
-      console.log("Generated public URL:", publicUrl);
-
-      // Save recording metadata with the public URL
-      const { data, error } = await supabase
-        .from('recordings')
-        .insert({
-          project_id: projectId,
-          name: `Recording ${new Date().toLocaleString()}`,
-          video_data: publicUrl
-        })
-        .select()
-        .single();
-
-      if (error) {
-        console.error("Database error:", error);
-        throw error;
-      }
-
-      console.log("Recording metadata saved to database:", data);
-      setShowProjectDialog(false);
-      onOpenChange(false);
+      console.log("Video uploaded successfully, public URL:", publicUrl);
+      setVideoUrl(publicUrl);
       toast.success("Recording saved successfully");
     } catch (error) {
       console.error("Error saving recording:", error);
       toast.error("Failed to save recording");
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  const handleCopyUrl = () => {
+    if (videoUrl) {
+      navigator.clipboard.writeText(videoUrl);
+      toast.success("URL copied to clipboard");
     }
   };
 
   return (
-    <>
-      <Dialog open={isOpen} onOpenChange={onOpenChange}>
-        <DialogContent className="sm:max-w-[600px]">
-          <DialogHeader>
-            <DialogTitle>Recording Preview</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4">
-            {videoUrl && (
-              <>
-                <video
-                  src={videoUrl}
-                  controls
-                  autoPlay
-                  className="w-full rounded-lg border"
-                />
-                <div className="flex gap-2">
-                  <Input
-                    value={videoUrl}
-                    readOnly
-                    className="flex-1"
-                  />
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    onClick={handleCopyUrl}
-                  >
-                    <Copy className="h-4 w-4" />
-                  </Button>
-                </div>
-              </>
-            )}
-          </div>
-          <DialogFooter>
-            <Button onClick={handleSaveRecording}>
+    <Dialog open={isOpen} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-[600px]">
+        <DialogHeader>
+          <DialogTitle>Recording Preview</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-4">
+          {videoBlob && (
+            <video
+              src={URL.createObjectURL(videoBlob)}
+              controls
+              className="w-full rounded-lg border"
+            />
+          )}
+          <div className="flex gap-2">
+            <Button
+              variant="default"
+              className="w-full"
+              onClick={handleSaveRecording}
+              disabled={isUploading || !videoBlob}
+            >
               <Save className="h-4 w-4 mr-2" />
-              Save to Project
+              {isUploading ? "Saving..." : "Save Recording"}
             </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      <ProjectDialog
-        isOpen={showProjectDialog}
-        onOpenChange={setShowProjectDialog}
-        onProjectCreated={handleProjectCreated}
-      />
-    </>
+          </div>
+          {videoUrl && (
+            <div className="flex gap-2">
+              <Input
+                value={videoUrl}
+                readOnly
+                className="flex-1"
+              />
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={handleCopyUrl}
+              >
+                <Copy className="h-4 w-4" />
+              </Button>
+            </div>
+          )}
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 };
