@@ -51,7 +51,7 @@ export const VideoSidebar = ({
       
       const { data: recordingsData, error } = await supabase
         .from('recordings')
-        .select('id, name, created_at, video_data')
+        .select('*')
         .eq('project_id', projectId)
         .order('created_at', { ascending: false });
 
@@ -73,6 +73,8 @@ export const VideoSidebar = ({
   const deleteRecording = async (recordingId: string) => {
     try {
       setIsLoading(true);
+      console.log("Deleting recording:", recordingId);
+      
       const { error } = await supabase
         .from('recordings')
         .delete()
@@ -80,6 +82,8 @@ export const VideoSidebar = ({
 
       if (error) throw error;
 
+      console.log("Recording deleted successfully");
+      
       if (selectedProject) {
         await loadRecordings(selectedProject);
       }
@@ -94,11 +98,14 @@ export const VideoSidebar = ({
 
   const playRecording = async (recordingId: string) => {
     try {
+      console.log("Playing recording:", recordingId);
       const recording = recordings.find(r => r.id === recordingId);
       if (recording?.video_data) {
+        console.log("Video data found:", recording.video_data);
         setVideoUrl(recording.video_data);
         setShowPreviewDialog(true);
       } else {
+        console.log("No video data available for recording:", recordingId);
         toast.error("No video data available");
       }
     } catch (error) {
