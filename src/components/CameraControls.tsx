@@ -34,6 +34,7 @@ export const CameraControls = ({
   setIsPaused,
 }: CameraControlsProps) => {
   const [showControls, setShowControls] = useState(false);
+  const [currentProjectId, setCurrentProjectId] = useState<string | null>(null);
   
   const {
     handleRecordingClick,
@@ -42,6 +43,7 @@ export const CameraControls = ({
     showProjectDialog,
     setShowProjectDialog,
     previewStream,
+    startRecording,
   } = useRecording({
     isRecording,
     setIsRecording,
@@ -56,8 +58,8 @@ export const CameraControls = ({
     handleCreateProject,
   } = useProjectDialog({
     setIsRecording,
-    setCurrentProjectId: () => {},
-    startRecording: async () => {},
+    setCurrentProjectId,
+    startRecording,
   });
 
   return (

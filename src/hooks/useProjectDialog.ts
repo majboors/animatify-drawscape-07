@@ -33,6 +33,7 @@ export const useProjectDialog = ({
       setCurrentProjectId(data.id);
       await startRecording();
       setProjectName("");
+      toast.success("Project created successfully");
     } catch (error) {
       console.error('Error creating project:', error);
       toast.error("Failed to create project");
