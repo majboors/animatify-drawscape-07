@@ -17,12 +17,27 @@ export const RecordingControls = ({
   onPauseResume,
   onSaveBoard,
 }: RecordingControlsProps) => {
+  const handleRecordClick = () => {
+    console.log("Record button clicked");
+    onRecordingClick();
+  };
+
+  const handlePauseResumeClick = () => {
+    console.log(`${isPaused ? "Resume" : "Pause"} button clicked`);
+    onPauseResume();
+  };
+
+  const handleSaveClick = () => {
+    console.log("Save button clicked");
+    onSaveBoard();
+  };
+
   return (
     <>
       <Button
         variant="outline"
         size="icon"
-        onClick={onRecordingClick}
+        onClick={handleRecordClick}
         className={isRecording ? "bg-red-500 text-white hover:bg-red-600" : ""}
       >
         <Video className="h-4 w-4" />
@@ -32,7 +47,7 @@ export const RecordingControls = ({
           <Button
             variant="outline"
             size="icon"
-            onClick={onPauseResume}
+            onClick={handlePauseResumeClick}
           >
             {isPaused ? (
               <Play className="h-4 w-4" />
@@ -43,7 +58,7 @@ export const RecordingControls = ({
           <Button 
             variant="outline" 
             size="icon" 
-            onClick={onSaveBoard}
+            onClick={handleSaveClick}
           >
             <Save className="h-4 w-4" />
           </Button>
