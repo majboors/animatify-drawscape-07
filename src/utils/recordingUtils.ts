@@ -7,32 +7,54 @@ export const saveRecordingToDatabase = async (
   videoData: string
 ) => {
   try {
-    console.log("Attempting to save recording:", { projectId, recordingName });
-    
-    if (!projectId || !recordingName || !videoData) {
-      throw new Error("Missing required data for saving recording");
+    // Convert base64 to blob
+    const base64Data = atob(videoData);
+    const arrayBuffer = new ArrayBuffer(base64Data.length);
+    const uint8Array = new Uint8Array(arrayBuffer);
+    for (let i = 0; i < base64Data.length; i++) {
+      uint8Array[i] = base64Data.charCodeAt(i);
+    }
+    const blob = new Blob([uint8Array], { type: 'video/webm' });
+
+    // Upload to storage
+    const fileName = `${Date.now()}-${recordingName}.webm`;
+    const { data: storageData, error: storageError } = await supabase.storage
+      .from('videos')
+      .upload(fileName, blob);
+
+    if (storageError) {
+      console.error('Storage error:', storageError);
+      throw storageError;
     }
 
+    // Get public URL
+    const { data: publicUrlData } = supabase.storage
+      .from('videos')
+      .getPublicUrl(fileName);
+
+    console.log('Video uploaded successfully. Public URL:', publicUrlData.publicUrl);
+
+    // Save recording reference to database
     const { data, error } = await supabase
       .from('recordings')
       .insert({
         project_id: projectId,
         name: recordingName,
-        video_data: videoData
+        video_data: publicUrlData.publicUrl
       })
       .select()
       .single();
 
     if (error) {
-      console.error("Supabase error while saving recording:", error);
+      console.error('Database error:', error);
       throw error;
     }
 
-    console.log("Recording saved successfully:", data);
+    console.log('Recording saved to database:', data);
     toast.success("Recording saved successfully!");
     return data;
   } catch (error) {
-    console.error('Error saving recording:', error);
+    console.error('Error in saveRecordingToDatabase:', error);
     toast.error("Failed to save recording");
     throw error;
   }
