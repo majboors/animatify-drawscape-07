@@ -57,7 +57,13 @@ export const useRecording = ({
         if (chunksRef.current.length > 0) {
           const blob = new Blob(chunksRef.current, { type: "video/webm" });
           console.log("[useRecording] Created blob:", blob.size, "bytes");
-          await handleSaveRecording(blob);
+          if (currentProjectId) {
+            await saveRecordingToDatabase(
+              currentProjectId,
+              `Recording ${new Date().toISOString()}`,
+              blob
+            );
+          }
         }
       };
 
@@ -80,28 +86,7 @@ export const useRecording = ({
       toast.error("Failed to start recording");
       throw error;
     }
-  }, [setIsRecording, setIsPaused]);
-
-  const handleSaveRecording = async (blob: Blob) => {
-    if (!currentProjectId) {
-      console.error("[useRecording] No project ID available");
-      toast.error("No project selected");
-      return;
-    }
-
-    try {
-      await saveRecordingToDatabase(
-        currentProjectId,
-        `Recording ${new Date().toISOString()}`,
-        blob
-      );
-      chunksRef.current = [];
-      console.log("[useRecording] Recording saved successfully");
-    } catch (error) {
-      console.error("[useRecording] Error saving recording:", error);
-      toast.error("Failed to save recording");
-    }
-  };
+  }, [setIsRecording, setIsPaused, currentProjectId]);
 
   const handleRecordingClick = () => {
     console.log("[useRecording] Record button clicked", { 

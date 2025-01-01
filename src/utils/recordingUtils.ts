@@ -12,16 +12,20 @@ export const saveRecordingToDatabase = async (
     console.log("[recordingUtils] Recording name:", recordingName);
     console.log("[recordingUtils] Video size:", videoBlob.size, "bytes");
 
+    // Convert Blob to File with proper extension
+    const file = new File([videoBlob], `recording-${Date.now()}.webm`, {
+      type: 'video/webm',
+    });
+
     // Create a unique file path
-    const timestamp = new Date().getTime();
-    const filePath = `${projectId}/${timestamp}-${crypto.randomUUID()}.webm`;
+    const filePath = `${projectId}/${Date.now()}-${crypto.randomUUID()}.webm`;
     console.log("[recordingUtils] Uploading to storage path:", filePath);
 
     // Upload to storage bucket
     const { data: storageData, error: storageError } = await supabase
       .storage
       .from('videos')
-      .upload(filePath, videoBlob, {
+      .upload(filePath, file, {
         contentType: 'video/webm',
         upsert: false
       });
@@ -33,18 +37,11 @@ export const saveRecordingToDatabase = async (
 
     console.log("[recordingUtils] Video uploaded to storage:", storageData);
 
-    // Get public URL with custom options for better video playback
+    // Get public URL
     const { data: { publicUrl } } = supabase
       .storage
       .from('videos')
-      .getPublicUrl(filePath, {
-        download: false,
-        transform: {
-          width: 1280,
-          height: 720,
-          quality: 80
-        }
-      });
+      .getPublicUrl(filePath);
 
     console.log("[recordingUtils] Public URL:", publicUrl);
 
