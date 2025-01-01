@@ -46,6 +46,8 @@ export const RecordingPreviewDialog = ({
     }
 
     try {
+      console.log("Saving video URL:", videoUrl);
+      
       const { data, error } = await supabase
         .from('recordings')
         .insert({

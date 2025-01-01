@@ -24,12 +24,13 @@ export const VideoListItem = ({ recording, onPlay, onDelete }: VideoListItemProp
         // Remove \x prefix and decode hex
         const hexString = url.slice(2);
         const decoded = Buffer.from(hexString, 'hex').toString();
+        console.log('Decoded URL:', decoded);
         return decoded;
       }
       return url;
     } catch (error) {
       console.error('Error decoding URL:', error);
-      return url;
+      return null;
     }
   };
 
