@@ -7,7 +7,12 @@ export const saveRecordingToDatabase = async (
   videoData: string
 ) => {
   try {
-    console.log("Saving recording:", { projectId, recordingName });
+    console.log("Attempting to save recording:", { projectId, recordingName });
+    
+    if (!projectId || !recordingName || !videoData) {
+      throw new Error("Missing required data for saving recording");
+    }
+
     const { data, error } = await supabase
       .from('recordings')
       .insert({
@@ -18,9 +23,13 @@ export const saveRecordingToDatabase = async (
       .select()
       .single();
 
-    if (error) throw error;
+    if (error) {
+      console.error("Supabase error while saving recording:", error);
+      throw error;
+    }
+
     console.log("Recording saved successfully:", data);
-    toast.success("Recording saved successfully");
+    toast.success("Recording saved successfully!");
     return data;
   } catch (error) {
     console.error('Error saving recording:', error);
@@ -40,6 +49,7 @@ export const requestScreenShare = async () => {
         frameRate: { ideal: 30 }
       }
     });
+    console.log("Screen share permission granted");
     return screenStream;
   } catch (error: any) {
     console.error('Error requesting screen share:', error);
@@ -52,12 +62,15 @@ export const requestScreenShare = async () => {
 
 export const requestMicrophoneAccess = async () => {
   try {
-    return await navigator.mediaDevices.getUserMedia({ 
+    console.log("Requesting microphone access...");
+    const stream = await navigator.mediaDevices.getUserMedia({ 
       audio: {
         echoCancellation: true,
         noiseSuppression: true,
       }
     });
+    console.log("Microphone access granted");
+    return stream;
   } catch (error) {
     console.warn('Microphone access denied:', error);
     return null;
@@ -66,25 +79,24 @@ export const requestMicrophoneAccess = async () => {
 
 export const startScreenRecording = async () => {
   try {
-    // First request screen sharing permission
+    console.log("Starting screen recording...");
     const screenStream = await requestScreenShare();
     if (!screenStream) {
       throw new Error("Failed to get screen access");
     }
 
-    // Then try to get microphone access
     const micStream = await requestMicrophoneAccess();
     if (!micStream) {
       console.log("Recording without audio - microphone access denied");
       return screenStream;
     }
 
-    // Combine both streams if we have both
     const tracks = [
       ...screenStream.getVideoTracks(),
       ...micStream.getAudioTracks()
     ];
 
+    console.log("Screen recording started successfully");
     return new MediaStream(tracks);
   } catch (error: any) {
     console.error('Error starting recording:', error);
