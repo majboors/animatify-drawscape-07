@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { Button } from "../ui/button";
 import { ScrollArea } from "../ui/scroll-area";
@@ -22,6 +22,7 @@ export const NewSidebarContent = ({ onOutputChange }: NewSidebarContentProps) =>
   const [code, setCode] = useState("");
   const [output, setOutput] = useState("");
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [editorMounted, setEditorMounted] = useState(false);
 
   const handleRun = async () => {
     try {
@@ -50,6 +51,10 @@ export const NewSidebarContent = ({ onOutputChange }: NewSidebarContentProps) =>
 
   const toggleFullscreen = () => {
     setIsFullscreen(!isFullscreen);
+  };
+
+  const handleEditorDidMount = () => {
+    setEditorMounted(true);
   };
 
   return (
@@ -93,25 +98,32 @@ export const NewSidebarContent = ({ onOutputChange }: NewSidebarContentProps) =>
         </div>
 
         <div className={`relative ${isFullscreen ? 'h-[80vh]' : 'h-[400px]'}`}>
-          <Editor
-            height="100%"
-            defaultLanguage="python"
-            language={language}
-            value={code}
-            onChange={(value) => setCode(value || "")}
-            theme="vs-dark"
-            options={{
-              minimap: { enabled: false },
-              fontSize: 14,
-              wordWrap: "on",
-              automaticLayout: true,
-              scrollBeyondLastLine: false,
-              lineNumbers: "on",
-              folding: true,
-              tabSize: 2,
-            }}
-            className="rounded-md overflow-hidden border border-input"
-          />
+          {editorMounted ? (
+            <Editor
+              height="100%"
+              defaultLanguage="python"
+              language={language}
+              value={code}
+              onChange={(value) => setCode(value || "")}
+              theme="vs-dark"
+              options={{
+                minimap: { enabled: false },
+                fontSize: 14,
+                wordWrap: "on",
+                automaticLayout: true,
+                scrollBeyondLastLine: false,
+                lineNumbers: "on",
+                folding: true,
+                tabSize: 2,
+              }}
+              onMount={handleEditorDidMount}
+              className="rounded-md overflow-hidden border border-input"
+            />
+          ) : (
+            <div className="h-full w-full flex items-center justify-center">
+              Loading editor...
+            </div>
+          )}
         </div>
 
         <Button onClick={handleRun} className="w-full">
