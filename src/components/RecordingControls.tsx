@@ -77,16 +77,17 @@ export const RecordingControls = ({
 
   return (
     <div className="flex gap-2">
-      <Button
-        variant="destructive"
-        size="sm"
-        onClick={handleSaveClick}
-        disabled={!isRecording}
-        className="mr-2"
-      >
-        <Save className="h-4 w-4 mr-1" />
-        Save Board
-      </Button>
+      {isRecording && (
+        <Button
+          variant="destructive"
+          size="sm"
+          onClick={handleSaveClick}
+          className="mr-2"
+        >
+          <Save className="h-4 w-4 mr-1" />
+          Save Board
+        </Button>
+      )}
 
       <Button
         variant="outline"
