@@ -14,14 +14,14 @@ import {
 
 interface NewSidebarContentProps {
   onOutputChange: (output: string) => void;
+  isFullscreen: boolean;
 }
 
-export const NewSidebarContent = ({ onOutputChange }: NewSidebarContentProps) => {
+export const NewSidebarContent = ({ onOutputChange, isFullscreen }: NewSidebarContentProps) => {
   const [language, setLanguage] = useState("python");
   const [filename, setFilename] = useState("test.py");
   const [code, setCode] = useState("");
   const [output, setOutput] = useState("");
-  const [isFullscreen, setIsFullscreen] = useState(false);
   const [editorMounted, setEditorMounted] = useState(false);
 
   const handleRun = async () => {
@@ -47,10 +47,6 @@ export const NewSidebarContent = ({ onOutputChange }: NewSidebarContentProps) =>
     setLanguage(value);
     const ext = languageExtensions[value];
     setFilename(`test.${ext}`);
-  };
-
-  const toggleFullscreen = () => {
-    setIsFullscreen(!isFullscreen);
   };
 
   const handleEditorDidMount = () => {
@@ -83,18 +79,6 @@ export const NewSidebarContent = ({ onOutputChange }: NewSidebarContentProps) =>
               placeholder="Filename"
             />
           </div>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={toggleFullscreen}
-            className="ml-2"
-          >
-            {isFullscreen ? (
-              <Minimize2 className="h-4 w-4" />
-            ) : (
-              <Maximize2 className="h-4 w-4" />
-            )}
-          </Button>
         </div>
 
         <div className={`relative ${isFullscreen ? 'h-[80vh]' : 'h-[400px]'}`}>
