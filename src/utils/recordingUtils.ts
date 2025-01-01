@@ -7,19 +7,25 @@ export const saveRecordingToDatabase = async (
   videoData: string
 ) => {
   try {
-    const { error } = await supabase
+    console.log("Saving recording:", { projectId, recordingName });
+    const { data, error } = await supabase
       .from('recordings')
       .insert({
         project_id: projectId,
         name: recordingName,
         video_data: videoData
-      });
+      })
+      .select()
+      .single();
 
     if (error) throw error;
+    console.log("Recording saved successfully:", data);
     toast.success("Recording saved successfully");
+    return data;
   } catch (error) {
     console.error('Error saving recording:', error);
     toast.error("Failed to save recording");
+    throw error;
   }
 };
 
@@ -69,7 +75,7 @@ export const startScreenRecording = async () => {
     // Then try to get microphone access
     const micStream = await requestMicrophoneAccess();
     if (!micStream) {
-      toast.warning("Recording without audio - microphone access denied");
+      console.log("Recording without audio - microphone access denied");
       return screenStream;
     }
 

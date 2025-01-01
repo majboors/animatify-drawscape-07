@@ -5,30 +5,33 @@ import { ExtendedCanvas } from "@/types/fabric";
 
 export const saveBoardState = async (canvasRef: CanvasRef | null, recordingId: string) => {
   try {
-    // Get the canvas instance from the ref using a custom method
+    console.log("Saving board state for recording:", recordingId);
     const canvas = await getFabricCanvas(canvasRef);
     if (!canvas) {
       throw new Error("Canvas not found");
     }
 
     const boardData = canvas.toJSON();
-    const { error } = await supabase
+    const { data, error } = await supabase
       .from('board_states')
-      .insert([{ recording_id: recordingId, board_data: boardData }]);
+      .insert([{ recording_id: recordingId, board_data: boardData }])
+      .select()
+      .single();
 
     if (error) throw error;
+    console.log("Board state saved successfully:", data);
     toast.success("Board state saved!");
+    return data;
   } catch (error) {
     console.error('Error saving board state:', error);
     toast.error("Failed to save board state");
+    throw error;
   }
 };
 
-// Helper function to get the Fabric canvas instance from the ref
 const getFabricCanvas = async (canvasRef: CanvasRef | null): Promise<ExtendedCanvas | null> => {
   if (!canvasRef) return null;
   
-  // Access the canvas instance through a new method we'll add to the CanvasRef interface
   if ('getFabricCanvas' in canvasRef) {
     return (canvasRef as any).getFabricCanvas();
   }
@@ -37,6 +40,7 @@ const getFabricCanvas = async (canvasRef: CanvasRef | null): Promise<ExtendedCan
 
 export const loadBoardStates = async (recordingId: string) => {
   try {
+    console.log("Loading board states for recording:", recordingId);
     const { data, error } = await supabase
       .from('board_states')
       .select('*')
@@ -44,6 +48,7 @@ export const loadBoardStates = async (recordingId: string) => {
       .order('created_at', { ascending: true });
 
     if (error) throw error;
+    console.log("Board states loaded successfully:", data);
     return data;
   } catch (error) {
     console.error('Error loading board states:', error);
