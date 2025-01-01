@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { FolderKanban, Maximize, Minimize, X } from "lucide-react";
+import { Code, Maximize, Minimize, X } from "lucide-react";
 import { Button } from "./ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
 import { Textarea } from "./ui/textarea";
@@ -41,15 +41,15 @@ export const ProjectSidebar = () => {
         variant="outline"
         size="icon"
         className="fixed right-4 top-4 z-50"
-        onClick={() => setShowProjectDialog(true)}
+        onClick={() => setIsOpen(true)}
       >
-        <FolderKanban className="h-4 w-4" />
+        <Code className="h-4 w-4" />
       </Button>
 
       <div className={sidebarClasses}>
         <div className="p-4">
           <div className="flex justify-between items-center mb-4">
-            <h2 className="text-lg font-semibold">Project Manager</h2>
+            <h2 className="text-lg font-semibold">Code</h2>
             <div className="flex gap-2">
               <Button
                 variant="outline"
