@@ -6,7 +6,7 @@ import { CameraControls } from "@/components/CameraControls";
 import { UserCamera } from "@/components/UserCamera";
 import { ProjectDialog } from "@/components/ProjectDialog";
 import { saveBoardState } from "@/utils/boardState";
-import { AppSidebar } from "@/components/sidebar/AppSidebar";
+import { NewSidebar } from "@/components/sidebar/NewSidebar";
 
 const Index = () => {
   const [activeTool, setActiveTool] = useState("select");
@@ -41,7 +41,7 @@ const Index = () => {
         activeColor={activeColor}
         activeFont={activeFont}
       />
-      <AppSidebar />
+      <NewSidebar />
       <VideoSidebar
         isOpen={isVideoSidebarOpen}
         onOpenChange={setIsVideoSidebarOpen}
