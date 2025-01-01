@@ -50,8 +50,7 @@ export const RecordingPreviewDialog = ({
       
       // Create a unique filename
       const timestamp = Date.now();
-      const uuid = crypto.randomUUID();
-      const filePath = `${projectId}/${timestamp}-${uuid}.webm`;
+      const filePath = `${projectId}/${timestamp}.webm`;
 
       console.log("Uploading video to storage bucket...");
 
