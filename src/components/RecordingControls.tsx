@@ -6,7 +6,7 @@ import { useState, useRef } from "react";
 import { ScreenRecorder } from "./ScreenRecorder";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "./ui/alert-dialog";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "./ui/dialog";
-import { supabase } from "@/integrations/supabase/client";
+import { RecordingPreviewDialog } from "./RecordingPreviewDialog";
 
 interface RecordingControlsProps {
   isRecording: boolean;
@@ -25,7 +25,10 @@ export const RecordingControls = ({
 }: RecordingControlsProps) => {
   const [showProjectDialog, setShowProjectDialog] = useState(false);
   const [showRecordingDialog, setShowRecordingDialog] = useState(false);
-  const screenRecorderRef = useRef(null);
+  const [currentProjectId, setCurrentProjectId] = useState<string | null>(null);
+  const [recordingBlob, setRecordingBlob] = useState<Blob | null>(null);
+  const [showPreviewDialog, setShowPreviewDialog] = useState(false);
+  const screenRecorderRef = useRef<any>(null);
 
   const handleRecordClick = () => {
     if (!isRecording) {
@@ -37,6 +40,7 @@ export const RecordingControls = ({
 
   const handleProjectCreated = async (projectId: string) => {
     setShowProjectDialog(false);
+    setCurrentProjectId(projectId);
     console.log("[RecordingControls] Project selected, starting recording with ID:", projectId);
     if (screenRecorderRef.current) {
       screenRecorderRef.current.startRecording();
@@ -68,7 +72,10 @@ export const RecordingControls = ({
 
   const handleStopRecording = () => {
     if (screenRecorderRef.current) {
-      screenRecorderRef.current.stopRecording();
+      screenRecorderRef.current.stopRecording((blob: Blob) => {
+        setRecordingBlob(blob);
+        setShowPreviewDialog(true);
+      });
       toast.success("Recording stopped successfully");
       setShowRecordingDialog(false);
     }
@@ -155,6 +162,13 @@ export const RecordingControls = ({
         isOpen={showProjectDialog}
         onOpenChange={setShowProjectDialog}
         onProjectCreated={handleProjectCreated}
+      />
+
+      <RecordingPreviewDialog
+        isOpen={showPreviewDialog}
+        onOpenChange={setShowPreviewDialog}
+        videoBlob={recordingBlob}
+        projectId={currentProjectId}
       />
 
       <ScreenRecorder ref={screenRecorderRef} />

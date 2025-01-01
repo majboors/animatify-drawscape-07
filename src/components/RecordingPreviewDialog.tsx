@@ -10,12 +10,14 @@ interface RecordingPreviewDialogProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
   videoBlob: Blob | null;
+  projectId?: string | null;
 }
 
 export const RecordingPreviewDialog = ({
   isOpen,
   onOpenChange,
-  videoBlob
+  videoBlob,
+  projectId
 }: RecordingPreviewDialogProps) => {
   const [videoUrl, setVideoUrl] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
@@ -50,16 +52,15 @@ export const RecordingPreviewDialog = ({
         .from('videos')
         .getPublicUrl(filePath);
 
-      const directUrl = publicUrl;
-      console.log("Video uploaded successfully, direct URL:", directUrl);
+      console.log("Video uploaded successfully, direct URL:", publicUrl);
 
-      // Save recording metadata to database with direct URL
+      // Save recording metadata to database with direct URL and project ID
       const { data: recordingData, error: dbError } = await supabase
         .from('recordings')
         .insert({
           name: `Recording ${new Date().toLocaleString()}`,
-          video_data: directUrl,
-          project_id: null
+          video_data: publicUrl,
+          project_id: projectId
         })
         .select()
         .single();
@@ -69,7 +70,7 @@ export const RecordingPreviewDialog = ({
         throw dbError;
       }
 
-      setVideoUrl(directUrl);
+      setVideoUrl(publicUrl);
       toast.success("Recording saved successfully");
     } catch (error) {
       console.error("Error saving recording:", error);
