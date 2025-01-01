@@ -15,30 +15,9 @@ interface VideoListItemProps {
 }
 
 export const VideoListItem = ({ recording, onPlay, onDelete }: VideoListItemProps) => {
-  // Decode the hex string to get the actual URL
-  const decodeHexString = (hexString: string) => {
-    try {
-      // Remove the '\x' prefix if present
-      const cleanHex = hexString.replace(/^\\x/, '');
-      // Convert hex to bytes
-      const bytes = new Uint8Array(
-        cleanHex.match(/.{1,2}/g)?.map(byte => parseInt(byte, 16)) || []
-      );
-      // Convert bytes to string
-      const decodedString = new TextDecoder().decode(bytes);
-      // If the string starts with 'blob:', extract the actual URL
-      return decodedString.replace(/^blob:/, '');
-    } catch (error) {
-      console.error('Error decoding hex string:', error);
-      return null;
-    }
-  };
-
-  const videoUrl = recording.video_data ? decodeHexString(recording.video_data) : null;
-
   const handleCopyUrl = () => {
-    if (videoUrl) {
-      navigator.clipboard.writeText(videoUrl);
+    if (recording.video_data) {
+      navigator.clipboard.writeText(recording.video_data);
       toast.success("URL copied to clipboard");
     }
   };
@@ -68,17 +47,17 @@ export const VideoListItem = ({ recording, onPlay, onDelete }: VideoListItemProp
         </div>
       </div>
 
-      {videoUrl && (
+      {recording.video_data && (
         <>
           <video
-            src={videoUrl}
+            src={recording.video_data}
             className="w-full rounded-lg border h-32 object-cover"
             preload="metadata"
             controls
           />
           <div className="flex gap-2">
             <Input
-              value={videoUrl}
+              value={recording.video_data}
               readOnly
               className="flex-1 text-sm"
             />
