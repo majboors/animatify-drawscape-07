@@ -15,11 +15,6 @@ interface VideoListItemProps {
 }
 
 export const VideoListItem = ({ recording, onPlay, onDelete }: VideoListItemProps) => {
-  // Convert hex URL to regular URL if needed
-  const videoUrl = recording.video_data?.startsWith('\\x') 
-    ? decodeHexString(recording.video_data.slice(2))
-    : recording.video_data;
-
   // Function to decode hex string using browser-native methods
   const decodeHexString = (hexString: string) => {
     try {
@@ -32,6 +27,11 @@ export const VideoListItem = ({ recording, onPlay, onDelete }: VideoListItemProp
       return recording.video_data; // Return original string if decoding fails
     }
   };
+
+  // Convert hex URL to regular URL if needed
+  const videoUrl = recording.video_data?.startsWith('\\x') 
+    ? decodeHexString(recording.video_data.slice(2))
+    : recording.video_data;
 
   const handleCopyUrl = () => {
     if (videoUrl) {
