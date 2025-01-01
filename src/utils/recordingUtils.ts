@@ -12,10 +12,12 @@ export const saveRecordingToDatabase = async (
     console.log("[recordingUtils] Recording name:", recordingName);
     console.log("[recordingUtils] Video size:", videoBlob.size, "bytes");
 
-    // Upload to storage bucket first
-    const filePath = `${projectId}/${crypto.randomUUID()}.webm`;
+    // Create a unique file path
+    const timestamp = new Date().getTime();
+    const filePath = `${projectId}/${timestamp}-${crypto.randomUUID()}.webm`;
     console.log("[recordingUtils] Uploading to storage path:", filePath);
 
+    // Upload to storage bucket
     const { data: storageData, error: storageError } = await supabase
       .storage
       .from('videos')
@@ -31,11 +33,18 @@ export const saveRecordingToDatabase = async (
 
     console.log("[recordingUtils] Video uploaded to storage:", storageData);
 
-    // Get public URL
+    // Get public URL with custom options for better video playback
     const { data: { publicUrl } } = supabase
       .storage
       .from('videos')
-      .getPublicUrl(filePath);
+      .getPublicUrl(filePath, {
+        download: false,
+        transform: {
+          width: 1280,
+          height: 720,
+          quality: 80
+        }
+      });
 
     console.log("[recordingUtils] Public URL:", publicUrl);
 
@@ -45,7 +54,7 @@ export const saveRecordingToDatabase = async (
       .insert({
         project_id: projectId,
         name: recordingName,
-        video_data: publicUrl, // Store the URL instead of the video data
+        video_data: publicUrl
       })
       .select()
       .single();
