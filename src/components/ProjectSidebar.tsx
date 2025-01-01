@@ -4,6 +4,7 @@ import { Button } from "./ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
 import { Textarea } from "./ui/textarea";
 import { toast } from "sonner";
+import { ProjectDialog } from "./ProjectDialog";
 
 export const ProjectSidebar = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -12,6 +13,7 @@ export const ProjectSidebar = () => {
   const [filename, setFilename] = useState("test.py");
   const [code, setCode] = useState("");
   const [output, setOutput] = useState("");
+  const [showProjectDialog, setShowProjectDialog] = useState(false);
 
   const handleRun = async () => {
     try {
@@ -24,6 +26,11 @@ export const ProjectSidebar = () => {
     }
   };
 
+  const handleProjectCreated = (projectId: string) => {
+    setShowProjectDialog(false);
+    setIsOpen(true);
+  };
+
   const sidebarClasses = `fixed top-0 right-0 h-full bg-white border-l border-gray-200 transition-all duration-300 ${
     isOpen ? (isFullscreen ? "w-full" : "w-1/3") : "w-0"
   }`;
@@ -34,7 +41,7 @@ export const ProjectSidebar = () => {
         variant="outline"
         size="icon"
         className="fixed right-4 top-4 z-50"
-        onClick={() => setIsOpen(!isOpen)}
+        onClick={() => setShowProjectDialog(true)}
       >
         <FolderKanban className="h-4 w-4" />
       </Button>
@@ -111,6 +118,12 @@ export const ProjectSidebar = () => {
           </div>
         </div>
       </div>
+
+      <ProjectDialog
+        isOpen={showProjectDialog}
+        onOpenChange={setShowProjectDialog}
+        onProjectCreated={handleProjectCreated}
+      />
     </>
   );
 };
