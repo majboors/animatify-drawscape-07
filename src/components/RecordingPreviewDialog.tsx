@@ -50,49 +50,12 @@ export const RecordingPreviewDialog = ({
       console.log("Starting video upload process...");
       const timestamp = Date.now();
       const filePath = `${projectId}/${timestamp}.webm`;
-      
-      // Convert video to smaller format before upload
-      const compressedBlob = await new Promise<Blob>((resolve) => {
-        const reader = new FileReader();
-        reader.onload = async (e) => {
-          if (!e.target?.result) return;
-          
-          // Create video element to handle conversion
-          const video = document.createElement('video');
-          video.src = URL.createObjectURL(videoBlob);
-          
-          await new Promise((resolve) => {
-            video.onloadedmetadata = () => resolve(null);
-          });
-          
-          // Create canvas for compression
-          const canvas = document.createElement('canvas');
-          const ctx = canvas.getContext('2d');
-          if (!ctx) return;
-          
-          // Set dimensions (can be adjusted for quality/size trade-off)
-          canvas.width = video.videoWidth;
-          canvas.height = video.videoHeight;
-          
-          // Draw video frame
-          ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-          
-          // Convert to blob with compression
-          canvas.toBlob(
-            (blob) => {
-              if (blob) resolve(blob);
-            },
-            'video/webm',
-            0.8 // Compression quality (0.8 = 80% quality)
-          );
-        };
-        reader.readAsDataURL(videoBlob);
-      });
 
+      // Upload the original WebM file without compression
       console.log("Uploading video to storage bucket...");
       const { data: uploadData, error: uploadError } = await supabase.storage
         .from('videos')
-        .upload(filePath, compressedBlob, {
+        .upload(filePath, videoBlob, {
           contentType: 'video/webm',
           cacheControl: '3600',
           upsert: true
