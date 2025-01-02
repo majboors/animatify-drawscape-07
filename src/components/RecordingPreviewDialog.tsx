@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Copy, Save } from "lucide-react";
+import { Copy, Save, Download } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -21,6 +21,21 @@ export const RecordingPreviewDialog = ({
 }: RecordingPreviewDialogProps) => {
   const [videoUrl, setVideoUrl] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
+
+  const downloadVideo = () => {
+    if (videoBlob) {
+      const url = URL.createObjectURL(videoBlob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `recording-${new Date().toISOString()}.webm`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      toast.success("Video downloaded successfully");
+    }
+  };
 
   const handleSaveRecording = async () => {
     if (!videoBlob || !projectId) {
@@ -29,17 +44,58 @@ export const RecordingPreviewDialog = ({
     }
 
     setIsUploading(true);
+    setUploadProgress(0);
+    
     try {
       console.log("Starting video upload process...");
       const timestamp = Date.now();
-      const filePath = `${projectId}/${timestamp}.mp4`;
+      const filePath = `${projectId}/${timestamp}.webm`;
+      
+      // Convert video to smaller format before upload
+      const compressedBlob = await new Promise<Blob>((resolve) => {
+        const reader = new FileReader();
+        reader.onload = async (e) => {
+          if (!e.target?.result) return;
+          
+          // Create video element to handle conversion
+          const video = document.createElement('video');
+          video.src = URL.createObjectURL(videoBlob);
+          
+          await new Promise((resolve) => {
+            video.onloadedmetadata = () => resolve(null);
+          });
+          
+          // Create canvas for compression
+          const canvas = document.createElement('canvas');
+          const ctx = canvas.getContext('2d');
+          if (!ctx) return;
+          
+          // Set dimensions (can be adjusted for quality/size trade-off)
+          canvas.width = video.videoWidth;
+          canvas.height = video.videoHeight;
+          
+          // Draw video frame
+          ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+          
+          // Convert to blob with compression
+          canvas.toBlob(
+            (blob) => {
+              if (blob) resolve(blob);
+            },
+            'video/webm',
+            0.8 // Compression quality (0.8 = 80% quality)
+          );
+        };
+        reader.readAsDataURL(videoBlob);
+      });
 
       console.log("Uploading video to storage bucket...");
       const { data: uploadData, error: uploadError } = await supabase.storage
         .from('videos')
-        .upload(filePath, videoBlob, {
-          contentType: 'video/mp4',
-          cacheControl: '3600'
+        .upload(filePath, compressedBlob, {
+          contentType: 'video/webm',
+          cacheControl: '3600',
+          upsert: true
         });
 
       if (uploadError) {
@@ -47,14 +103,14 @@ export const RecordingPreviewDialog = ({
         throw uploadError;
       }
 
-      // Get the direct public URL for the video
+      // Get the public URL for the video
       const { data: { publicUrl } } = supabase.storage
         .from('videos')
         .getPublicUrl(filePath);
 
       console.log("Video uploaded successfully, public URL:", publicUrl);
 
-      // Save recording metadata to database with direct URL and project ID
+      // Save recording metadata to database
       const { data: recordingData, error: dbError } = await supabase
         .from('recordings')
         .insert({
@@ -74,7 +130,7 @@ export const RecordingPreviewDialog = ({
       toast.success("Recording saved successfully");
     } catch (error) {
       console.error("Error saving recording:", error);
-      toast.error("Failed to save recording");
+      toast.error("Failed to save recording. Please download the video as backup.");
     } finally {
       setIsUploading(false);
     }
@@ -111,7 +167,15 @@ export const RecordingPreviewDialog = ({
               disabled={isUploading || !videoBlob}
             >
               <Save className="h-4 w-4 mr-2" />
-              {isUploading ? "Saving..." : "Save Recording"}
+              {isUploading ? `Saving... ${uploadProgress}%` : "Save Recording"}
+            </Button>
+            <Button
+              variant="outline"
+              onClick={downloadVideo}
+              disabled={!videoBlob}
+            >
+              <Download className="h-4 w-4 mr-2" />
+              Download
             </Button>
           </div>
           {videoUrl && (
